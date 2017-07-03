@@ -1,0 +1,25 @@
+{
+  "name": "vault-env",
+  "version": "0.1.0",
+  "description": "Read and set environmental variables for processes from Vault",
+  "main": "./lib/VaultEnv.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@git.namecheap.net/namp/ecs_deploy.git"
+  },
+  "author": "Vladimir Doba <vladimir.doba@namecheap.com>",
+  "license": "UNLICENSED",
+  "bin": {
+    "vault-env": "./bin/cli.js"
+  },
+  "dependencies": {
+    "commander": "^2.10.0",
+    "lodash": "^4.17.4",
+    "log4js": "^1.1.1",
+    "node-vault-client": "^0.2.0",
+    "rxjs": "^5.4.1"
+  }
+}
