@@ -1,0 +1,10 @@
+FROM node:$VERSION
+
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+
+COPY . .
+RUN npm install -q --no-progress
+#RUN npm install -q --no-progress config
+
+CMD npm test

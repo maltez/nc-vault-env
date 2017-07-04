@@ -6,7 +6,7 @@
   "vault": {
     "address": "https://vault.example.com",
     "auth": {
-      "type": "appRole",
+      "type": "approle",
       "config": {
         "role_id": "APP_ROLE_ID"
       }

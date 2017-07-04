@@ -4,14 +4,27 @@ const _ = require('lodash');
 const {exec} = require('child_process');
 
 class Runner {
-    constructor(exec, {kill_signal, logger}) {
+    /**
+     * @param {string} exec
+     * @param {string} cwd
+     * @param {string} killSignal
+     * @param {Object} logger
+     * @param {Function} exit
+     */
+    constructor(exec, {cwd, killSignal, logger, exit}) {
         this.exec = exec;
-        this.killSignal = kill_signal;
+        this.cwd = cwd;
+        this.killSignal = killSignal;
         this.logger = logger;
+        this.selfExit = exit;
     }
 
+    /**
+     * @param {Object} env
+     * @returns {{stdout: *, stderr: *}}
+     */
     run(env) {
-        this.child = exec(this.exec, _.extend({}, process.env, env));
+        this.child = exec(this.exec, {env: _.extend({}, process.env, env), cwd: this.cwd});
         this.logger.info(
             'running %s (pid %s)',
             this.exec,
@@ -19,22 +32,22 @@ class Runner {
         );
         this.logger.debug('environment:\n%s', JSON.stringify(env, null, '\t'));
 
+        this.child.on('exit', this.selfExit);
+
         return {
             stdout: this.child.stdout,
             stderr: this.child.stderr
         };
     }
 
-    stop() {
-        // TODO
-        if (!this.child) {
-            return Promise.resolve();
-        }
-
+    /**
+     * @returns {Promise}
+     */
+    async stop() {
         return new Promise((resolve) => {
             this.logger.info('stopping');
-            this.child.on('exit', (code, signal) => resolve());
-
+            this.child.removeListener('exit', this.selfExit);
+            this.child.on('exit', (code, signal) => resolve({code}));
             this.logger.debug('send signal %s for pid %s', this.killSignal, this.child.pid);
             this.child.kill(this.killSignal);
         });
