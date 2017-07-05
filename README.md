@@ -21,13 +21,15 @@
       "path": "secret/some_secret",
       "format": "SECRET_<%= key %>"
     }
-  ],
-  "kill_signal": "SIGTERM",
-  "verbosity": "debug"
+  ]
 }
 ```
 
 # Usage
 ```bash
+# Help; Usage examples; Config example;
+node ./bin/cli.js --help
+
+# Run
 env NODE_ENV=staging node ./bin/cli.js -c config.json -v debug command_for_run
 ```

@@ -2,39 +2,42 @@
 
 const _ = require('lodash');
 const VaultClient = require('node-vault-client');
-const Runner = require('./Runner');
-const Secret = require('./Secret');
+const exec = require('child_process').exec;
+const template = require('./template');
 
 class VaultEnv {
     /**
      * @param {string} exec - command for execute
      * @param {Object} config
      * @param {string} [config.cwd]
-     * @param {Object|Function} config.logger
+     * @param {Object} config.logger
      * @param {Object} config.vault
      * @param {Array<Object>} config.secrets
-     * @param {killSignal} config.killSignal
      */
-    constructor(exec, {cwd, logger, vault, secrets, killSignal}) {
+    constructor(exec, config) {
         this.exec = exec;
-        this.secrets = _.map(
-            secrets,
-            ({path, format}) => new Secret(path, {format})
-        );
-        this.killSignal = killSignal;
-        this.vault = vault;
-        this.cwd = cwd || process.cwd();
-        this.loggerFactory = _.isFunction(logger) ? logger : () => logger;
+        this.vault = config.vault;
+        this.cwd = config.cwd || process.cwd();
+        this.logger = config.logger;
+
+        this.secrets = _.map(config.secrets, (secret) => ({
+            path: template(secret.path)(),
+            format: (response) => {
+                const tpl = template(secret.format);
+                return _.chain(response)
+                    .map((value, key) => [_.toUpper(tpl({key: key})), value])
+                    .fromPairs()
+                    .value();
+            }
+        }));
     }
 
     /**
-     * @param {Function} exit
+     * @param {Function} onStop
      * @returns {Promise.<{stdout, stderr}>}
      */
-    async run(exit) {
-        const logger = this.loggerFactory();
-
-        logger.info(
+    run(onStop) {
+        this.logger.debug(
             `creating vault api client (%s)`,
             this.vault.address
         );
@@ -44,28 +47,48 @@ class VaultEnv {
                 url: this.vault.address
             },
             auth: this.vault.auth,
-            logger: (channel) => this.loggerFactory(channel ? `vault_client/${channel}` : 'vault_client')
+            logger: this.logger
         });
 
-
-        const runner = this.runner = new Runner(this.exec, {
-            killSignal: this.killSignal,
-            logger: this.loggerFactory('runner'),
-            cwd: this.cwd,
-            exit: exit
-        });
-
-        return Promise.all(_.map(this.secrets, async (secret) =>
-            vault.read(secret.path).then((response) => secret.parseResponse(response.getData()))))
+        return Promise.all(_.map(
+            this.secrets,
+            (secret) => vault.read(secret.path).then((response) => secret.format(response.getData()))))
             .then((values) => _.extend(...values))
-            .then((env) => runner.run(env));
+            .then((env) => this._exec(env, onStop));
     }
 
     /**
-     * @returns {Promise}
+     * @private
      */
-    async stop() {
-        return this.runner.stop()
+    _exec(env, onStop) {
+        const child = this._child = exec(
+            this.exec,
+            {env: _.extend({}, process.env, env), cwd: this.cwd}
+        );
+
+        this.logger.info(
+            'running %s (pid %s)',
+            this.exec,
+            child.pid
+        );
+        this.logger.debug('environment:\n%s', JSON.stringify(env, null, '\t'));
+
+        child.on('exit', onStop);
+
+        return {
+            stdout: child.stdout,
+            stderr: child.stderr
+        };
+    }
+
+    kill(signal) {
+        this.logger.debug(
+            'send signal %s for pid %s',
+            signal,
+            this._child.pid
+        );
+
+        this._child.kill(signal);
     }
 }
 

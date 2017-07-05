@@ -15,72 +15,108 @@ commander
     .arguments('<exec>')
     .option(
         '-c, --config <path>',
-        'Config file',
+        'path to config file',
         (v) => path.resolve(v)
     )
     .option(
         '-v, --verbosity <level>',
-        'Level of verbosity (according to RFC 5424)',
-        /^(debug|info|notice|warning|error|critical|alert|emergency)$/i,
-        'warning'
+        'level of verbosity. "info" by default.',
+        /^(error|warn|info|verbose|debug|silly)$/i,
+        'info'
     )
-    .option(
-        '--kill_signal <signal>',
-        'Kill signal to send to child process. Can be one of SIGHUP,SIGTERM,SIGINT,SIGQUIT,SIGUSR1,SIGUSR2',
-        /^(SIGHUP|SIGTERM|SIGINT|SIGQUIT|SIGUSR1|SIGUSR2)$/
-    )
+    .on('--help', function () {
+        console.log();
+        console.log(' Config: ');
+        console.log(configExample('  '));
+        console.log();
+        console.log('  Usage:');
+        console.log('    $ vault-env --verbosity debug -c ./config.json');
+        console.log();
+    })
     .parse(process.argv);
 
 const exec = commander.args.join(' ');
 const config = require(commander.config);
 
-function loggerFactory(channel) {
-    return new winston.Logger({
-        level: config.verbosity,
+(() => {
+    const logger = new winston.Logger({
+        level: commander.verbosity,
         levels: {
-            emergency: 0,
-            alert: 1,
-            critical: 2,
-            error: 3,
-            warning: 4,
-            notice: 5,
-            info: 6,
-            debug: 7
+            error: 0,
+            warn: 1,
+            info: 2,
+            debug: 3,
+            trace: 4,
         },
         transports: [
             new winston.transports.Console({
                 formatter(options) {
-                    return `[${new Date().toString()}] [${_.upperCase(options.level)}] (${channel}) - ${options.message}`;
+                    return `[${_.upperCase(options.level)}] - ${options.message}`;
                 }
             })
         ]
     });
-}
 
-const vaultEnv = new VaultEnv(
-    exec,
-    _.extend(config, {
-        killSignal: (commander.kill_signal ? commander.kill_signal : config.kill_signal) || 'SIGTERM',
-        logger: (channel) => loggerFactory(channel ? `vault_env/${channel}` : 'vault_env')
-    })
-);
-
-(async () => {
-    const logger = loggerFactory('vault_env');
+    const vaultEnv = new VaultEnv(
+        exec,
+        _.extend({logger: logger}, config)
+    );
 
     logger.info('Vault Env (version %s)', VERSION);
-    const {stdout, stderr} = await vaultEnv.run((code) => {
-        logger.info('child process has finished execution. it was returned exit code %s', code);
-        process.exit(code);
-    });
 
-    stdout.pipe(process.stdout);
-    stderr.pipe(process.stderr);
-
-    _.each(['SIGINT', 'SIGTERM'], (signal) => {
-        process.on(signal, () => {
-            logger.info('receive %s signal.', signal);
-            vaultEnv.stop().then(({code}) => process.exit(code));
+    return vaultEnv
+        .run((code, signal) => {
+            logger.info(
+                'child process has finished execution. code=%s signal=%s',
+                code === null ? 'None' : code,
+                signal === null ? 'None' : signal,
+            );
+            process.exit(code);
+        })
+        .then((stream) => {
+            stream.stdout.pipe(process.stdout);
+            stream.stderr.pipe(process.stderr);
+            _.each([
+                'SIGHUP',
+                'SIGTERM',
+                'SIGINT',
+                'SIGQUIT',
+                'SIGUSR1',
+                'SIGUSR2'
+            ], (signal) => {
+                process.on(signal, () => {
+                    logger.info('receive %s signal.', signal);
+                    vaultEnv.kill(signal);
+                });
+            });
         });
-    });
-})();
+
+})().catch((reason) => {
+    console.error(reason);
+    process.exit(1);
+});
+
+
+function configExample(pad) {
+    return JSON.stringify({
+        vault: {
+            address: "https://vault.example.com",
+            auth: {
+                type: "appRole",
+                config: {
+                    role_id: "__YOUR_ROLE_ID_HERE__"
+                }
+            }
+        },
+        secrets: [
+            {
+                path: "mysql/<%= env('NODE_ENV') %>/my_database",
+                format: "DATABASE_<%= key %>"
+            },
+            {
+                path: "secret/my_secret_key",
+                format: "SECRET_<%= key %>"
+            }
+        ]
+    }, null, '  ').split('\n').map((line) => `${pad}${line}`).join('\n');
+}

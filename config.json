@@ -2,7 +2,7 @@
   "vault": {
     "address": "https://vault.devops.namecheap.net",
     "auth": {
-      "type": "approle",
+      "type": "appRole",
       "config": {
         "role_id": "213700f9-21eb-7d03-c2b0-18a6b1b7b6bf"
       }
@@ -18,6 +18,5 @@
       "format": "EV_DATABASE_1_<%= key %>"
     }
   ],
-  "kill_signal": "SIGTERM",
   "verbosity": "debug"
 }

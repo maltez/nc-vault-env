@@ -17,10 +17,8 @@ function env(variable) {
  * @param {string} tpl
  * @returns {Function}
  */
-function template(tpl) {
+module.exports = function template(tpl) {
     return _.template(tpl, {
-        imports: {env}
+        imports: {env: env}
     });
-}
-
-module.exports = template;
+};

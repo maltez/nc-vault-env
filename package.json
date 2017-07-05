@@ -5,7 +5,7 @@
   "main": "./lib/VaultEnv.js",
   "scripts": {
     "test": "mocha test/**/*.test.js",
-    "test-ci": "npm install autochecker --no-progress && autochecker 7-wheezy 8-wheezy"
+    "test-ci": "set -x && npm update autochecker -q --no-progress && export TMPDIR=$(mktemp -d) && autochecker 5-wheezy 6-wheezy 8-wheezy; e=$?; rm -Rf ${TMPDIR}; exit $e"
   },
   "repository": {
     "type": "git",
@@ -26,8 +26,6 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "mocha": "^3.2.0",
-    "sinon": "^2.3.4",
-    "sinon-chai": "^2.11.0"
+    "mocha": "^3.2.0"
   }
 }
