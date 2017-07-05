@@ -17,8 +17,23 @@ function env(variable) {
  * @param {string} tpl
  * @returns {Function}
  */
-module.exports = function template(tpl) {
+function template(tpl) {
     return _.template(tpl, {
         imports: {env: env}
     });
+}
+
+module.exports = function (secret) {
+    const tpl = template(secret.format);
+
+    const format = (response) =>
+        _.chain(response)
+            .map((value, key) => [_.toUpper(tpl({key: key})), value])
+            .fromPairs()
+            .value();
+
+    return {
+        path: template(secret.path)(),
+        format: format,
+    };
 };

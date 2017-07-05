@@ -4,6 +4,7 @@ const _ = require('lodash');
 const chai = require('chai');
 const mockery = require('mockery');
 const expect = chai.expect;
+const WritableStream = require('memory-streams').WritableStream;
 
 // Null Logger
 const logger = _.fromPairs(_.map(['error', 'warn', 'info', 'debug', 'trace'], (prop) => [prop, _.noop]));
@@ -50,15 +51,13 @@ describe('VaultEnv', function () {
         const vaultEnv = instantiate('bash -c "echo Hello, VaultEnv!"', bootOptions);
 
         return new Promise((resolve) => {
-            let out = '';
+            const stream = new WritableStream();
+
             vaultEnv
-                .run((code) => {
-                    expect(out).to.match(/Hello,\sVaultEnv!/);
+                .run(stream, (code) => {
+                    expect(stream.toString()).to.match(/Hello,\sVaultEnv!/);
                     expect(code).to.equal(0);
                     resolve();
-                })
-                .then((stream) => {
-                    stream.stdout.on('data', (buffer) => out += buffer.toString())
                 });
         });
     });
@@ -69,7 +68,7 @@ describe('VaultEnv', function () {
 
         return new Promise((resolve) => {
             vaultEnv
-                .run((code, signal) => {
+                .run(new WritableStream(), (code, signal) => {
                     expect(signal).to.equal(SIGNAL);
                     resolve();
                 });
@@ -106,22 +105,21 @@ describe('VaultEnv', function () {
         const vaultEnv = instantiate('env', _.extend({secrets}, bootOptions), secretResponses);
 
         return new Promise((resolve) => {
-            let out = '';
+            const stream = new WritableStream();
             vaultEnv
-                .run(() => {
-                    _.each(
-                        [
-                            ['SECRET_VALUE', secretResponses['secret/private_key'].value],
-                            ['DATABASE_USERNAME', secretResponses['staging/mysql'].username],
-                            ['DATABASE_PASSWORD', secretResponses['staging/mysql'].password],
-                        ],
-                        (v) => expect(out).to.include(`${v[0]}=${v[1]}`)
-                    );
-                    resolve();
-                })
-                .then((stream) => {
-                    stream.stdout.on('data', (buffer) => out += buffer.toString())
-                });
+                .run(
+                    stream,
+                    () => {
+                        _.each(
+                            [
+                                ['SECRET_VALUE', secretResponses['secret/private_key'].value],
+                                ['DATABASE_USERNAME', secretResponses['staging/mysql'].username],
+                                ['DATABASE_PASSWORD', secretResponses['staging/mysql'].password],
+                            ],
+                            (v) => expect(stream.toString()).to.include(`${v[0]}=${v[1]}`)
+                        );
+                        resolve();
+                    });
         });
     });
 });

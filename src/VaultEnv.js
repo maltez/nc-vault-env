@@ -15,80 +15,84 @@ class VaultEnv {
      * @param {Array<Object>} config.secrets
      */
     constructor(exec, config) {
-        this.exec = exec;
-        this.vault = config.vault;
-        this.cwd = config.cwd || process.cwd();
-        this.logger = config.logger;
+        this.__execCommand = exec;
+        this.__vault = config.vault;
+        this.__cwd = config.cwd || process.cwd();
+        this.__logger = config.logger;
 
-        this.secrets = _.map(config.secrets, (secret) => ({
-            path: template(secret.path)(),
-            format: (response) => {
-                const tpl = template(secret.format);
-                return _.chain(response)
-                    .map((value, key) => [_.toUpper(tpl({key: key})), value])
-                    .fromPairs()
-                    .value();
-            }
-        }));
+        this.secrets = _.map(config.secrets, (secret) => template(secret));
+
+        this.__child = null;
     }
 
     /**
+     * @param  stdout
      * @param {Function} onStop
-     * @returns {Promise.<{stdout, stderr}>}
      */
-    run(onStop) {
-        this.logger.debug(
-            `creating vault api client (%s)`,
-            this.vault.address
+    run(stdout, onStop) {
+        Promise.resolve()
+            .then(() => this.__getEnv(this.secrets))
+            .then((env) => this.__exec(env, onStop, stdout));
+    }
+
+    kill(signal) {
+        if (!this.__child) {
+            return;
+        }
+
+        this.__logger.debug(
+            'send signal %s for pid %s',
+            signal,
+            this.__child.pid
         );
 
-        const vault = new VaultClient({
-            api: {
-                url: this.vault.address
-            },
-            auth: this.vault.auth,
-            logger: this.logger
-        });
-
-        return Promise.all(_.map(
-            this.secrets,
-            (secret) => vault.read(secret.path).then((response) => secret.format(response.getData()))))
-            .then((values) => _.extend(...values))
-            .then((env) => this._exec(env, onStop));
+        this.__child.kill(signal);
     }
 
     /**
      * @private
      */
-    _exec(env, onStop) {
-        const child = this._child = exec(
-            this.exec,
-            {env: _.extend({}, process.env, env), cwd: this.cwd}
+    __getEnv(secrets) {
+        this.__logger.debug(
+            `creating vault api client (%s)`,
+            this.__vault.address
         );
 
-        this.logger.info(
-            'running %s (pid %s)',
-            this.exec,
-            child.pid
-        );
-        this.logger.debug('environment:\n%s', JSON.stringify(env, null, '\t'));
+        const vault = new VaultClient({
+            api: {
+                url: this.__vault.address
+            },
+            auth: this.__vault.auth,
+            logger: this.__logger
+        });
 
-        child.on('exit', onStop);
-
-        return {
-            stdout: child.stdout,
-            stderr: child.stderr
-        };
+        return Promise.all(
+            _.map(secrets, (secret) => {
+                return vault
+                    .read(secret.path)
+                    .then((response) => secret.format(response.getData()))
+            })
+        ).then((values) => _.extend(...values))
     }
 
-    kill(signal) {
-        this.logger.debug(
-            'send signal %s for pid %s',
-            signal,
-            this._child.pid
+    /**
+     * @private
+     */
+    __exec(env, onStop, stdout) {
+        const child = this.__child = exec(
+            this.__execCommand,
+            {env: _.extend({}, process.env, env), cwd: this.__cwd}
         );
 
-        this._child.kill(signal);
+        this.__logger.info(
+            'running %s (pid %s)',
+            this.__execCommand,
+            child.pid
+        );
+        this.__logger.debug('environment:\n%s', JSON.stringify(env, null, '\t'));
+
+        child.on('exit', onStop);
+        child.stdout.pipe(stdout);
     }
 }
 
