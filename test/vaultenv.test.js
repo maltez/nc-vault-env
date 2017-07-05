@@ -48,7 +48,7 @@ describe('VaultEnv', function () {
     }
 
     it('Should run process', function () {
-        const vaultEnv = instantiate('bash -c "echo Hello, VaultEnv!"', bootOptions);
+        const vaultEnv = instantiate('echo Hello, VaultEnv!', bootOptions);
 
         return new Promise((resolve) => {
             const stream = new WritableStream();

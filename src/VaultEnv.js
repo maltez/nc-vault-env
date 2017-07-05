@@ -2,7 +2,7 @@
 
 const _ = require('lodash');
 const VaultClient = require('node-vault-client');
-const exec = require('child_process').exec;
+const spawn = require('child_process').spawn;
 const template = require('./template');
 
 class VaultEnv {
@@ -20,7 +20,7 @@ class VaultEnv {
         this.__cwd = config.cwd || process.cwd();
         this.__logger = config.logger;
 
-        this.secrets = _.map(config.secrets, (secret) => template(secret));
+        this.__secrets = _.map(config.secrets, (secret) => template(secret));
 
         this.__child = null;
     }
@@ -31,7 +31,7 @@ class VaultEnv {
      */
     run(stdout, onStop) {
         Promise.resolve()
-            .then(() => this.__getEnv(this.secrets))
+            .then(() => this.__getEnv(this.__secrets))
             .then((env) => this.__exec(env, onStop, stdout));
     }
 
@@ -79,8 +79,13 @@ class VaultEnv {
      * @private
      */
     __exec(env, onStop, stdout) {
-        const child = this.__child = exec(
-            this.__execCommand,
+        const argv = this.__execCommand.split(/\s+/);
+        const command = argv[0];
+        const args = argv.slice(1);
+
+        const child = this.__child = spawn(
+            command,
+            args,
             {env: _.extend({}, process.env, env), cwd: this.__cwd}
         );
 
@@ -92,6 +97,10 @@ class VaultEnv {
         this.__logger.debug('environment:\n%s', JSON.stringify(env, null, '\t'));
 
         child.on('exit', onStop);
+        child.on('error', (error) => {
+            this.__logger('child process error %s', error);
+            onStop(1);
+        });
         child.stdout.pipe(stdout);
     }
 }
