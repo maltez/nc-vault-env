@@ -7,7 +7,7 @@
     "test": "mocha test/**/*.test.js",
     "test-ci": "set -x && npm update autochecker -q --no-progress && export TMPDIR=$(mktemp -d) && autochecker 5-wheezy 6-wheezy 8-wheezy; e=$?; rm -Rf ${TMPDIR}; exit $e",
     "preversion": "npm run test-ci",
-    "version": "git add -A ."
+    "version": "git add -A package.json"
   },
   "repository": {
     "type": "git",
