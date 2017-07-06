@@ -79,7 +79,7 @@ vaultEnv
         logger.info(
             'child process has finished execution. code=%s signal=%s',
             code === null ? 'None' : code,
-            signal === null ? 'None' : signal,
+            signal === null ? 'None' : signal
         );
         process.exit(code);
     });
