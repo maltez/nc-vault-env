@@ -15,7 +15,13 @@ describe('VaultEnv', function () {
     const bootOptions = {
         logger: logger,
         vault: {
-            address: 'https://vault.example.com'
+            address: 'https://vault.example.com',
+            auth: {
+                type: 'appRole',
+                config: {
+                    role_id: '<%= env(\'NODE_ENV\') %>_role'
+                }
+            }
         },
         cwd: __dirname
     };
@@ -55,9 +61,12 @@ describe('VaultEnv', function () {
 
             vaultEnv
                 .run(stream, (code) => {
-                    expect(stream.toString()).to.match(/Hello,\sVaultEnv!/);
-                    expect(code).to.equal(0);
-                    resolve();
+                    _.delay(() => {
+                        expect(stream.toString()).to.match(/Hello,\sVaultEnv!/);
+                        expect(code).to.equal(0);
+
+                        resolve();
+                    }, 100);
                 });
         });
     });
@@ -73,7 +82,7 @@ describe('VaultEnv', function () {
                     resolve();
                 });
 
-            _.delay(() => vaultEnv.kill(SIGNAL), 10);
+            _.delay(() => vaultEnv.kill(SIGNAL), 100);
         });
     });
 
@@ -109,16 +118,19 @@ describe('VaultEnv', function () {
             vaultEnv
                 .run(
                     stream,
-                    () => {
-                        _.each(
-                            [
-                                ['SECRET_VALUE', secretResponses['secret/private_key'].value],
-                                ['DATABASE_USERNAME', secretResponses['staging/mysql'].username],
-                                ['DATABASE_PASSWORD', secretResponses['staging/mysql'].password],
-                            ],
-                            (v) => expect(stream.toString()).to.include(`${v[0]}=${v[1]}`)
-                        );
-                        resolve();
+                    (code) => {
+                        _.delay(() => {
+                            _.each(
+                                [
+                                    ['SECRET_VALUE', secretResponses['secret/private_key'].value],
+                                    ['DATABASE_USERNAME', secretResponses['staging/mysql'].username],
+                                    ['DATABASE_PASSWORD', secretResponses['staging/mysql'].password],
+                                ],
+                                (v) => expect(stream.toString()).to.include(`${v[0]}=${v[1]}`)
+                            );
+                            expect(code).to.equal(0);
+                            resolve();
+                        }, 100);
                     });
         });
     });
