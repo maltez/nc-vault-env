@@ -16,11 +16,12 @@ class VaultEnv {
      */
     constructor(exec, config) {
         this.__execCommand = exec;
-        this.__vault = config.vault;
         this.__cwd = config.cwd || process.cwd();
         this.__logger = config.logger;
 
-        this.__secrets = _.map(config.secrets, (secret) => template(secret));
+        const tpl = template(_.pick(config, ['vault', 'secrets']));
+        this.__secrets = tpl.secrets;
+        this.__vault = tpl.vault;
 
         this.__child = null;
     }

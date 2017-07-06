@@ -23,7 +23,7 @@ function template(tpl) {
     });
 }
 
-module.exports = function (secret) {
+function templateSecret(secret) {
     const tpl = template(secret.format);
 
     const format = (response) =>
@@ -35,5 +35,12 @@ module.exports = function (secret) {
     return {
         path: template(secret.path)(),
         format: format,
+    };
+}
+
+module.exports = function (config) {
+    return {
+        vault: JSON.parse(template(JSON.stringify(config.vault))()),
+        secrets: _.map(config.secrets, (secret) => templateSecret(secret))
     };
 };
