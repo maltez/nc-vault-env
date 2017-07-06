@@ -19,7 +19,7 @@ describe('VaultEnv', function () {
             auth: {
                 type: 'appRole',
                 config: {
-                    role_id: '<%= env(\'NODE_ENV\') %>_role'
+                    role_id: 'ab2aen4goo5uopheiv9IeM4Ro2eed2cheeWuree4'
                 }
             }
         },
