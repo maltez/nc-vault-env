@@ -27,7 +27,7 @@ commander
     .on('--help', function () {
         console.log();
         console.log('  Usage:');
-        console.log('    $ vault-env --verbosity debug -c ./config.json');
+        console.log('    $ nc-vault-env --verbosity debug -c ./config.json command_for_run');
         console.log();
     })
     .parse(process.argv);

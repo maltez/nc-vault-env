@@ -1,6 +1,6 @@
 {
-  "name": "vault-env",
-  "version": "0.1.0",
+  "name": "nc-vault-env",
+  "version": "1.0.0",
   "description": "Read and set environmental variables for processes from Vault",
   "main": "./lib/VaultEnv.js",
   "scripts": {
@@ -9,12 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "ssh://git@git.namecheap.net/namp/ecs_deploy.git"
+    "url": "https://git.namecheap.net/scm/nclibs/vault-env.git"
   },
   "author": "Vladimir Doba <vladimir.doba@namecheap.com>",
   "license": "UNLICENSED",
   "bin": {
-    "vault-env": "./bin/cli.js"
+    "nc-vault-env": "./bin/cli.js"
   },
   "dependencies": {
     "autochecker": "^0.9.2",
