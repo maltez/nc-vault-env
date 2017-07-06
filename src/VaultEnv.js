@@ -7,7 +7,10 @@ const template = require('./template');
 
 class VaultEnv {
     /**
-     * @param {string} spawn - command for execute
+     * @param {Object} spawn
+     * @param {string} spawn.command
+     * @param {Array} spawn.args
+     * @param {Object} spawn.options
      * @param {Object} config
      * @param {string} [config.cwd]
      * @param {Object} config.logger
