@@ -22,13 +22,12 @@ describe('VaultEnv', function () {
                     role_id: 'ab2aen4goo5uopheiv9IeM4Ro2eed2cheeWuree4'
                 }
             }
-        },
-        cwd: __dirname
+        }
     };
 
     let secretResponses = {};
 
-    function instantiate(exec, options, _secretResponses) {
+    function instantiate(spawn, options, _secretResponses) {
         secretResponses = _secretResponses;
         mockery.enable({
             warnOnReplace: false,
@@ -50,39 +49,51 @@ describe('VaultEnv', function () {
         mockery.deregisterMock('node-vault-client');
         mockery.disable();
 
-        return new VaultEnv(exec, options);
+        return new VaultEnv(spawn, options);
     }
 
     it('Should run process', function () {
-        const vaultEnv = instantiate('echo Hello, VaultEnv!', bootOptions);
-
         return new Promise((resolve) => {
             const stream = new WritableStream();
-
-            vaultEnv
-                .run(stream, (code) => {
+            const spawn = {
+                command: 'echo',
+                args: ['Hello, Vault!'],
+                options: {stdio: ['ignore', 'pipe', 'ignore']},
+                onExit(code) {
                     _.delay(() => {
-                        expect(stream.toString()).to.match(/Hello,\sVaultEnv!/);
+                        expect(stream.toString()).to.match(/Hello,\sVault!\n/);
                         expect(code).to.equal(0);
-
                         resolve();
                     }, 100);
-                });
+                }
+            };
+            const vaultEnv = instantiate(spawn, bootOptions);
+
+            vaultEnv
+                .run()
+                .then((child) => child.stdout.pipe(stream))
         });
     });
 
     it('Should send signal to child process', function () {
-        const vaultEnv = instantiate('sleep 60', bootOptions);
-        const SIGNAL = 'SIGTERM';
-
         return new Promise((resolve) => {
-            vaultEnv
-                .run(new WritableStream(), (code, signal) => {
+            const SIGNAL = 'SIGTERM';
+            const spawn = {
+                command: 'sleep',
+                args: ['60'],
+                stdio: 'ignore',
+                options: {},
+                onExit(code, signal) {
                     expect(signal).to.equal(SIGNAL);
                     resolve();
-                });
+                }
+            };
 
-            _.delay(() => vaultEnv.kill(SIGNAL), 100);
+            const vaultEnv = instantiate(spawn, bootOptions);
+
+            vaultEnv
+                .run()
+                .then(() => vaultEnv.kill(SIGNAL))
         });
     });
 
@@ -111,27 +122,36 @@ describe('VaultEnv', function () {
             }
         };
 
-        const vaultEnv = instantiate('env', _.extend({secrets}, bootOptions), secretResponses);
-
         return new Promise((resolve) => {
             const stream = new WritableStream();
+
+            const spawn = {
+                command: 'env',
+                args: [],
+                stdio: 'ignore',
+                options: {stdio: ['ignore', 'pipe', 'ignore']},
+                onExit(code) {
+                    _.delay(() => {
+                        _.each(
+                            [
+                                ['SECRET_VALUE', secretResponses['secret/private_key'].value],
+                                ['DATABASE_USERNAME', secretResponses['staging/mysql'].username],
+                                ['DATABASE_PASSWORD', secretResponses['staging/mysql'].password],
+                            ],
+                            (v) => expect(stream.toString()).to.include(`${v[0]}=${v[1]}`)
+                        );
+                        expect(code).to.equal(0);
+                        resolve();
+                    }, 100)
+                }
+            };
+
+            const vaultEnv = instantiate(spawn, _.extend({secrets}, bootOptions), secretResponses);
+
             vaultEnv
-                .run(
-                    stream,
-                    (code) => {
-                        _.delay(() => {
-                            _.each(
-                                [
-                                    ['SECRET_VALUE', secretResponses['secret/private_key'].value],
-                                    ['DATABASE_USERNAME', secretResponses['staging/mysql'].username],
-                                    ['DATABASE_PASSWORD', secretResponses['staging/mysql'].password],
-                                ],
-                                (v) => expect(stream.toString()).to.include(`${v[0]}=${v[1]}`)
-                            );
-                            expect(code).to.equal(0);
-                            resolve();
-                        }, 100);
-                    });
+                .run()
+                .then((child) => child.stdout.pipe(stream))
+
         });
     });
 });
