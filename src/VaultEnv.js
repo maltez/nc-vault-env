@@ -7,35 +7,35 @@ const template = require('./template');
 
 class VaultEnv {
     /**
-     * @param {string} exec - command for execute
+     * @param {Object} spawn
+     * @param {string} spawn.command
+     * @param {Array} spawn.args
+     * @param {Object} spawn.options
      * @param {Object} config
      * @param {string} [config.cwd]
      * @param {Object} config.logger
      * @param {Object} config.vault
      * @param {Array<Object>} config.secrets
      */
-    constructor(exec, config) {
-        this.__execCommand = exec;
-        this.__cwd = config.cwd || process.cwd();
+    constructor(spawn, config) {
+        this.__spawn = spawn;
         this.__logger = config.logger;
 
-        const tpl = template(_.pick(config, ['vault', 'secrets']));
-        this.__secrets = tpl.secrets;
-        this.__vault = tpl.vault;
-
+        this.__config = template(_.pick(config, ['vault', 'secrets']));
         this.__child = null;
     }
 
-    /**
-     * @param  stdout
-     * @param {Function} onStop
-     */
-    run(stdout, onStop) {
-        Promise.resolve()
-            .then(() => this.__getEnv(this.__secrets))
-            .then((env) => this.__exec(env, onStop, stdout));
+    run() {
+        this.__logger.debug('final config:\n%s', JSON.stringify(this.__config, null, '  '));
+        return Promise.resolve()
+            .then(() => this.__getEnv(this.__config.secrets))
+            .then((env) => this.__exec(env));
     }
 
+    /**
+     *
+     * @param signal
+     */
     kill(signal) {
         if (!this.__child) {
             return;
@@ -56,14 +56,14 @@ class VaultEnv {
     __getEnv(secrets) {
         this.__logger.debug(
             `creating vault api client (%s)`,
-            this.__vault.address
+            this.__config.vault.address
         );
 
         const vault = new VaultClient({
             api: {
-                url: this.__vault.address
+                url: this.__config.vault.address
             },
-            auth: this.__vault.auth,
+            auth: this.__config.vault.auth,
             logger: this.__logger
         });
 
@@ -79,30 +79,28 @@ class VaultEnv {
     /**
      * @private
      */
-    __exec(env, onStop, stdout) {
-        const argv = this.__execCommand.split(/\s+/);
-        const command = argv[0];
-        const args = argv.slice(1);
-
+    __exec(env) {
         const child = this.__child = spawn(
-            command,
-            args,
-            {env: _.extend({}, process.env, env), cwd: this.__cwd}
+            this.__spawn.command,
+            this.__spawn.args,
+            _.extend({}, this.__spawn.options, {env: _.extend({}, this.__spawn.options.env, env)})
         );
 
         this.__logger.info(
-            'running %s (pid %s)',
-            this.__execCommand,
+            'running command="%s" args="%s" (pid %s)',
+            this.__spawn.command,
+            this.__spawn.args.join(' '),
             child.pid
         );
         this.__logger.debug('environment:\n%s', JSON.stringify(env, null, '\t'));
 
-        child.on('exit', onStop);
+        child.on('exit', this.__spawn.onExit);
         child.on('error', (error) => {
-            this.__logger('child process error %s', error);
-            onStop(1);
+            this.__logger.error('child process error %s', error);
+            this.__spawn.onExit(1);
         });
-        child.stdout.pipe(stdout);
+
+        return child;
     }
 }
 
