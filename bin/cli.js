@@ -61,7 +61,7 @@ commander
                         code === null ? 'None' : code,
                         signal === null ? 'None' : signal
                     );
-		    const parentCode = code === null ? 1 : code;
+                    const parentCode = code === null ? 1 : code;
                     logger.info('exiting with code=%s', parentCode);
                     process.exit(parentCode);
                 }
