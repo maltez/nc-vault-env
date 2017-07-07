@@ -39,13 +39,13 @@ commander
             transports: [
                 new winston.transports.Console({
                     formatter(options) {
-                        return `[${_.upperCase(options.level)}] - ${options.message}`;
+                        return `(Vault Env) [${_.upperCase(options.level)}] - ${options.message}`;
                     }
                 })
             ]
         });
 
-        logger.info('Vault Env (version %s)', VERSION);
+        logger.info('version %s', VERSION);
 
         const vaultEnv = new VaultEnv(
             {
@@ -61,7 +61,9 @@ commander
                         code === null ? 'None' : code,
                         signal === null ? 'None' : signal
                     );
-                    process.exit(code);
+                    const parentCode = code === null ? 1 : code;
+                    logger.info('exiting with code=%s', parentCode);
+                    process.exit(parentCode);
                 }
             },
             _.extend({logger: logger}, config)
@@ -81,7 +83,12 @@ commander
             });
         });
 
-        vaultEnv.run()
+        vaultEnv
+            .run()
+            .catch((reason) => {
+                logger.error('Unhandled promise rejection. Reason: %s', reason);
+                process.exit(1);
+            });
     })
     .on('--help', function () {
         console.log();
