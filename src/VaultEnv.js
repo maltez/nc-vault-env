@@ -54,16 +54,21 @@ class VaultEnv {
      * @private
      */
     __getEnv(secrets) {
+        const vaultConfig = _.cloneDeep(this.__config.vault);
         this.__logger.debug(
             `creating vault api client (%s)`,
-            this.__config.vault.address
+            vaultConfig.address
         );
+        if (vaultConfig.auth.type === 'iam') {
+            const AWS = require('aws-sdk');
+            vaultConfig.auth.config.credentials = AWS.CredentialProviderChain.defaultProviders;
+        }
 
         const vault = new VaultClient({
             api: {
-                url: this.__config.vault.address
+                url: vaultConfig.address
             },
-            auth: this.__config.vault.auth,
+            auth: vaultConfig.auth,
             logger: this.__logger
         });
 
