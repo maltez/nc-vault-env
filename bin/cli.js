@@ -86,7 +86,7 @@ commander
         vaultEnv
             .run()
             .catch((reason) => {
-                logger.error('Unhandled promise rejection: %s', reason.message);
+                logger.error('Unhandled promise rejection. Reason: %s', reason);
                 process.exit(1);
             });
     })
