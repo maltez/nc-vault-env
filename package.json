@@ -1,5 +1,5 @@
 {
-  "name": "nc-vault-env",
+  "name": "namecheap-vault-env",
   "version": "1.1.0",
   "description": "Read and set environmental variables for processes from Vault",
   "main": "./lib/VaultEnv.js",
