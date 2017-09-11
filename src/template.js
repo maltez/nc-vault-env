@@ -33,7 +33,6 @@ function templateSecret(secret) {
         }
     }
 
-
     const format = (response) =>
         _.chain(response)
             .map((value, key) => [_.toUpper(tpl({key: key})), value])
