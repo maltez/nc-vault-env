@@ -34,7 +34,14 @@ npm install -g nc-vault-env
         },
         {
           "path": "secret/some_secret",
+          // key templating
           "format": "SECRET_<%= key %>"
+        },
+        {
+          "path": "secret/database",
+          // value templating
+          "format": "<%= username %>:<%= password %>",
+          "key": "CONNECTION_STRING"
         }
       ]
     }

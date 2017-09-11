@@ -26,6 +26,14 @@ function template(tpl) {
 function templateSecret(secret) {
     const tpl = template(secret.format);
 
+    if (_.isString(secret.key)) {
+        return {
+            path: template(secret.path)(),
+            format: (response) => ({[secret.key]: tpl(response)})
+        }
+    }
+
+
     const format = (response) =>
         _.chain(response)
             .map((value, key) => [_.toUpper(tpl({key: key})), value])
