@@ -154,4 +154,51 @@ describe('VaultEnv', function () {
 
         });
     });
+
+
+
+    it('Should template secret value', function () {
+        const env = `_NODE_ENV_${Math.round(Math.random() * 1000)}`;
+        process.env[env] = 'staging';
+
+        const secrets = [
+            {
+                path: `<%= env('${env}') %>/mysql`,
+                key: 'CONNECTION_STRING',
+                format: `<%= username %>:<%= password %>@<%= env('${env}') %>`
+            }
+        ];
+
+        const secretResponses = {
+            'staging/mysql': {
+                username: 'vault_is_awesome',
+                password: 'root_is_good_password',
+            }
+        };
+
+        return new Promise((resolve) => {
+            const stream = new WritableStream();
+
+            const spawn = {
+                command: 'env',
+                args: [],
+                stdio: 'ignore',
+                options: {stdio: ['ignore', 'pipe', 'ignore']},
+                onExit(code) {
+                    _.delay(() => {
+                        expect(stream.toString()).to.include(`CONNECTION_STRING=${secretResponses['staging/mysql'].username}:${secretResponses['staging/mysql'].password}@staging`);
+                        expect(code).to.equal(0);
+                        resolve();
+                    }, 100)
+                }
+            };
+
+            const vaultEnv = instantiate(spawn, _.extend({secrets}, bootOptions), secretResponses);
+
+            vaultEnv
+                .run()
+                .then((child) => child.stdout.pipe(stream))
+
+        });
+    });
 });
