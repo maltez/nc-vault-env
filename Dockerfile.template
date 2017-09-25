@@ -1,0 +1,9 @@
+FROM node:$NODE_VERSION-alpine
+
+WORKDIR /app
+
+COPY . .
+
+RUN npm install -q --no-progress && npm install -q --no-progress config
+
+CMD ["npm", "run", "test-ci"]

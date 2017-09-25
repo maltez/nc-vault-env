@@ -1,9 +1,0 @@
-FROM node:$VERSION
-
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
-
-COPY . .
-RUN npm install -q --no-progress
-
-CMD ["npm", "test"]

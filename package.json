@@ -5,8 +5,7 @@
   "main": "./lib/VaultEnv.js",
   "scripts": {
     "test": "mocha test/**/*.test.js",
-    "test-ci": "set -x && npm update autochecker -q --no-progress && export TMPDIR=$(mktemp -d) && autochecker 5-wheezy 6-wheezy 8-wheezy; e=$?; rm -Rf ${TMPDIR}; exit $e",
-    "preversion": "npm run test-ci",
+    "test-ci": "MOCHA_FILE=./report/mocha.xml mocha test/**/*.test.js --reporter mocha-junit-reporter",
     "version": "git add -A package.json"
   },
   "repository": {
@@ -28,6 +27,7 @@
     "winston": "^2.3.1"
   },
   "devDependencies": {
+    "mocha-junit-reporter": "^1.13.0",
     "chai": "^3.5.0",
     "memory-streams": "^0.1.2",
     "mocha": "^3.2.0"
