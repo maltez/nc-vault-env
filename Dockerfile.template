@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY . .
 
-RUN npm install -q --no-progress && npm install -q --no-progress config
+RUN npm install -q --no-progress
 
 CMD ["npm", "run", "test-ci"]
