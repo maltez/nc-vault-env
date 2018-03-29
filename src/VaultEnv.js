@@ -70,11 +70,11 @@ class VaultEnv {
                 url: vaultConfig.address
             },
             auth: vaultConfig.auth,
-            logger: loggerFactory(
+            logger: this.__loggerOptions ? loggerFactory(
                 'Vault Env / Client',
                 this.__loggerOptions.verbosity,
                 this.__loggerOptions.format
-            )
+            ) : this.__logger
         });
 
         return Promise.all(
