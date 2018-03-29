@@ -4,7 +4,7 @@
 const _ = require('lodash');
 const commander = require('commander');
 const path = require('path');
-const winston = require('winston');
+const loggerFactory = require('./../src/loggerFactory');
 const VaultEnv = require('../src/VaultEnv');
 const pkg = require('../package.json');
 
@@ -21,31 +21,25 @@ commander
     .option(
         '-v, --verbosity <level>',
         'level of verbosity. "info" by default.',
-        /^(error|warn|info|verbose|debug|silly)$/i,
+        /^(error|warn|info|debug|trace)$/i,
         'info'
+    )
+    .option(
+        '-f, --log-format <format>',
+        'logging format. "json" by default.',
+        /^(json|text)$/i,
+        'json'
     )
     .action((spawn, spawnArgs) => {
         const config = require(commander.config);
 
-        const logger = new winston.Logger({
-            level: config.verbosity || commander.verbosity,
-            levels: {
-                error: 0,
-                warn: 1,
-                info: 2,
-                debug: 3,
-                trace: 4,
-            },
-            transports: [
-                new winston.transports.Console({
-                    formatter(options) {
-                        return `(Vault Env) [${_.upperCase(options.level)}] - ${options.message}`;
-                    }
-                })
-            ]
-        });
+        const verbosity = commander.verbosity || config.verbosity;
+        const format = commander.logFormat || config.logFormat;
+
+        const logger = loggerFactory('Vault Env', verbosity, format);
 
         logger.info('version %s', VERSION);
+        logger.info('verbosity "%s"', verbosity);
 
         const vaultEnv = new VaultEnv(
             {
@@ -66,7 +60,7 @@ commander
                     process.exit(parentCode);
                 }
             },
-            _.extend({logger: logger}, config)
+            _.extend({logger: logger, loggerOptions: {verbosity: verbosity, format: format}}, config)
         );
 
         _.each([
