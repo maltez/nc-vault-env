@@ -3,6 +3,7 @@
 
 const _ = require('lodash');
 const commander = require('commander');
+const fs = require('fs');
 const path = require('path');
 const loggerFactory = require('./../src/loggerFactory');
 const VaultEnv = require('../src/VaultEnv');
@@ -31,8 +32,6 @@ commander
         'json'
     )
     .action((spawn, spawnArgs) => {
-        const config = require(commander.config);
-
         const verbosity = commander.verbosity || config.verbosity;
         const format = commander.logFormat || config.logFormat;
 
@@ -40,6 +39,26 @@ commander
 
         logger.info('version %s', VERSION);
         logger.info('verbosity "%s"', verbosity);
+
+        let config;
+        try {
+            if (!fs.existsSync(commander.config)) {
+                logger.error('configuration file doesn\'t exist: %s', commander.config);
+                process.exit(1);
+            }
+            config = require(commander.config);
+        }
+        catch (e) {
+            if (e.name === 'SyntaxError') {
+                logger.error('configuration file syntax error: %s', e.message)
+            }
+            else {
+                logger.error(e.message);
+            }
+
+            process.exit(1);
+        }
+
 
         const vaultEnv = new VaultEnv(
             {
@@ -81,6 +100,7 @@ commander
             .run()
             .catch((reason) => {
                 logger.error('Unhandled promise rejection. Reason: %s', reason);
+                logger.error('Unhandled promise rejection. Trace: %s', reason.stack);
                 process.exit(1);
             });
     })
