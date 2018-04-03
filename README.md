@@ -1,6 +1,8 @@
-# Introduction
+# nc-vault-env
 
-Nc-Vault-Env provides a convenient way to launch a subprocess with environment variables populated from Vault.
+[![npm version](https://badge.fury.io/js/nc-vault-env.svg)](https://badge.fury.io/js/nc-vault-env
+
+This package provides a convenient way to launch a subprocess with environment variables populated from Vault.
 
 # How it works?
 
@@ -9,7 +11,7 @@ Also, propagate received signals to subprocess.
 
 # Installation
 
-NPM Package: https://www.npmjs.com/package/nc-vault-env[nc-vault-env]
+NPM Package: [nc-vault-env](https://www.npmjs.com/package/nc-vault-env)
 
 `nc-vault-env` written in nodejs, so you need to install suitable versions.
 It currently has been tested with `6.x` and `8.x`.
@@ -19,6 +21,23 @@ npm install -g nc-vault-env
 ```
 
 # Usage
+
+## Run
+
+```bash
+nc-vault-env -c config.json -- run_my_app.sh
+```
+
+## CLI
+
+Options:
+
+| option           | description                                                                              |
+|------------------|------------------------------------------------------------------------------------------|
+| -c, --config     | path to configuration file.                                                              |
+| -v, --verbosity  | verbosity level. Supported "error", "warn", "info", "debug", "trace". Default is "info". |
+| -f, --log-format | logging format. Supported "json" and "text". Default is "json".                          |
+
 ## Configuration File
 
 Configuration files are written in json.
@@ -125,22 +144,6 @@ Predefined functions:
 |-----|-------------------------------------------|----------------------------|
 | env | provides access to environment variables. | <%= env('VAULT_ADDR') %>   |
 |     |                                           |                            |
-
-## CLI
-
-Options:
-
-| option           | description                                                                              |
-|------------------|------------------------------------------------------------------------------------------|
-| -c, --config     | path to configuration file.                                                              |
-| -v, --verbosity  | verbosity level. Supported "error", "warn", "info", "debug", "trace". Default is "info". |
-| -f, --log-format | logging format. Supported "json" and "text". Default is "json".                          |
-
-## Run
-
-```bash
-nc-vault-env -c config.json -- run_my_app.sh
-```
 
 # Troubleshooting
 
