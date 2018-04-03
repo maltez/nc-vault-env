@@ -136,7 +136,7 @@ Configuration files are written in json.
 
 ## Templating
 
-Templating based on https://lodash.com/docs/#template[Lodash template function].
+Templating based on [Lodash template function](https://lodash.com/docs/#template).
 
 Predefined functions:
 
