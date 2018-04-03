@@ -1,55 +1,169 @@
-# nc-vault-env
+# Introduction
 
-nc-vault-env provides a convenient way to populate secrets from Vault into a child process environment using the nc-vault-env daemon.
+Nc-Vault-Env provides a convenient way to launch a subprocess with environment variables populated from Vault.
 
-The daemon allows applications to be configured with secret variables, without having knowledge about the existence of Vault. This makes it especially easy to configure applications throughout all your environments: development, testing, production, etc.
+# How it works?
 
-nc-vault-env is inspired by envconsul in its simplicity, name, and function. The biggest difference here that nc-vault-env supports not only [token](https://www.vaultproject.io/docs/auth/token.html) authentication method but also an [AppRole](https://www.vaultproject.io/docs/auth/approle.html) & [AWS IAM](https://www.vaultproject.io/docs/auth/aws.html#iam-authentication-method).
+This tool fetches specified secrets then run your app with environment variables that contain secrets.
+Also, propagate received signals to subprocess.
 
-**The documentation in this README corresponds to the master branch of the project. It may contain unreleased features or different APIs than the most recently released version. Please see the Git tag that corresponds to your version of envconsul for the proper documentation.**
+# Installation
 
-## Install
-```
+NPM Package: https://www.npmjs.com/package/nc-vault-env[nc-vault-env]
+
+`nc-vault-env` written in nodejs, so you need to install suitable versions.
+It currently has been tested with `6.x` and `8.x`.
+
+```bash
 npm install -g nc-vault-env
 ```
 
-## Quick start
+# Usage
+## Configuration File
 
-1. Put the following config to the `/config.json`
-    ```json
-    {
-      "vault": {
-        "address": "https://vault.example.com",
-        "auth": {
-          "type": "appRole",
-          "config": {
-            "role_id": "b2a7cfb9-d09a-49c4-9e9a-24127c6dbbf6"
-          }
-        }
-      },
-      "secrets": [
-        {
-          "path": "<%= env('MYENV') %>/mysql/main/creds/app_auth",
-          "format": "DATABASE_<%= key %>"
-        },
-        {
-          "path": "secret/some_secret",
-          // key templating
-          "format": "SECRET_<%= key %>"
-        },
-        {
-          "path": "secret/database",
-          // value templating
-          "format": "<%= username %>:<%= password %>",
-          "key": "CONNECTION_STRING"
-        }
-      ]
+Configuration files are written in json.
+
+```js
+{
+  // This denotes the start of the configuration section for Vault.
+  "vault": {
+    // This is the address of the Vault. The protocol (http(s)) portion
+    // of the address is required.
+    //
+    // Like this: https://vault.devops.namecheap.net
+    "address": "<%= env('VAULT_ADDR') %>",
+
+    // This part related to authentication configuration
+    "auth": {
+
+      // Supported auth types:
+      // * token - see https://www.vaultproject.io/docs/auth/token.html
+      // * iam - see https://www.vaultproject.io/docs/auth/aws.html#iam-auth-method
+      // * appRole - see https://www.vaultproject.io/docs/auth/approle.html
+      "type": "token",
+
+      // Auth backend configuration
+
+      // token:
+      // It can be suitable to debugging locally
+      //
+      // "config": {
+      //   "token": "<%= env('VAULT_TOKEN') %>"
+      // }
+
+      // iam:
+      // It is preferred way to run within aws
+      //
+      // "config": {
+      //  "role": "my_awesome_api",
+      //  "iam_server_id_header_value": "<%= env('VAULT_ADDR') %>"
+      // }
+
+      // appRole:
+      //
+      // "config": {
+      //  "role_id": "b2a7cfb9-d09a-49c4-9e9a-24127c6dbbf6"
+      // }
+
+      "config": {
+        // ...
+      }
     }
-    ```
+  },
 
-1. Run
-    ```bash
-    $ MYENV=staging nc-vault-env -c /config.json -v debug command_for_run
-    ```
+  // This specifies a secret in Vault to fetch.
+  "secrets": [
+    // There are two different behaviours:
 
+    // * value templating
+    //
+    // secret like this:
+    // {
+    //   "username": "awesome",
+    //   "password: "securePa$$word"
+    // }
+    //
+    // should produce environment variable like this:
+    // ConnectionString="user id=awesome;password=securePa$$word"
+    {
+      // path to secret
+      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/mssql",
+      // value template
+      "format": "user id=<%= username %>;password=<%= password %>",
+      // env variable to populate
+      "key": "ConnectionString"
+    },
 
+    // * key templating
+    //
+    // secret like this:
+    // {
+    //   "username": "awesome",
+    //   "password: "securePa$$word"
+    // }
+    //
+    // should produce multiple environment variables like this:
+    // RMQ_USERNAME="awesome"
+    // RMQ_PASSWORD="securePa$$word"
+    //
+    // Note that names will be uppercased.
+    {
+      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/rmq",
+      "format": "RMQ_<%= key %>"
+    }
+  ]
+}
+```
+
+## Templating
+
+Templating based on https://lodash.com/docs/#template[Lodash template function].
+
+Predefined functions:
+
+| fn  | description                               | usage                      |
+|-----|-------------------------------------------|----------------------------|
+| env | provides access to environment variables. | <%= env('VAULT_ADDR') %>   |
+|     |                                           |                            |
+
+## CLI
+
+Options:
+
+| option           | description                                                                              |
+|------------------|------------------------------------------------------------------------------------------|
+| -c, --config     | path to configuration file.                                                              |
+| -v, --verbosity  | verbosity level. Supported "error", "warn", "info", "debug", "trace". Default is "info". |
+| -f, --log-format | logging format. Supported "json" and "text". Default is "json".                          |
+
+## Run
+
+```bash
+nc-vault-env -c config.json -- run_my_app.sh
+```
+
+# Troubleshooting
+
+For debugging purpose you can run this locally using you vault token (token auth backend).
+This way assumes that you have access to all of your app's secrets.
+
+Please be aware that debug or trace log level prints secret to stdout, so be careful with enable this level on real environment.
+
+```bash
+cat config.json
+# {
+#   "vault": {
+#     "address": "<%= env('VAULT_ADDR') %>",
+#     "auth": {
+#       "type": "token",
+#       "config": {
+#         "token": "<%= env('VAULT_TOKEN') %>"
+#       }
+#     }
+#   },
+#   ...
+# }
+export VAULT_ADDR=https://vault.devops.namecheap.net
+export VAULT_TOKEN=$(cat ~/.vault-token)
+nc-vault-env -c config.json -f text -v trace -- run_my_app.sh
+```
