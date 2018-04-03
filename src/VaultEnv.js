@@ -4,6 +4,7 @@ const _ = require('lodash');
 const VaultClient = require('node-vault-client');
 const spawn = require('child_process').spawn;
 const template = require('./template');
+const loggerFactory = require('./loggerFactory');
 
 class VaultEnv {
     /**
@@ -20,13 +21,13 @@ class VaultEnv {
     constructor(spawn, config) {
         this.__spawn = spawn;
         this.__logger = config.logger;
+        this.__loggerOptions = config.loggerOptions;
 
         this.__config = template(_.pick(config, ['vault', 'secrets']));
         this.__child = null;
     }
 
     run() {
-        this.__logger.debug('final config:\n%s', JSON.stringify(this.__config, null, '  '));
         return Promise.resolve()
             .then(() => this.__getEnv(this.__config.secrets))
             .then((env) => this.__exec(env));
@@ -69,11 +70,16 @@ class VaultEnv {
                 url: vaultConfig.address
             },
             auth: vaultConfig.auth,
-            logger: this.__logger
+            logger: this.__loggerOptions ? loggerFactory(
+                'Vault Env / Client',
+                this.__loggerOptions.verbosity,
+                this.__loggerOptions.format
+            ) : this.__logger
         });
 
         return Promise.all(
             _.map(secrets, (secret) => {
+                this.__logger.info('reading path %s', secret.path);
                 return vault
                     .read(secret.path)
                     .then((response) => secret.format(response.getData()))

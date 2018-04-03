@@ -3,8 +3,9 @@
 
 const _ = require('lodash');
 const commander = require('commander');
+const fs = require('fs');
 const path = require('path');
-const winston = require('winston');
+const loggerFactory = require('./../src/loggerFactory');
 const VaultEnv = require('../src/VaultEnv');
 const pkg = require('../package.json');
 
@@ -21,31 +22,43 @@ commander
     .option(
         '-v, --verbosity <level>',
         'level of verbosity. "info" by default.',
-        /^(error|warn|info|verbose|debug|silly)$/i,
+        /^(error|warn|info|debug|trace)$/i,
         'info'
     )
+    .option(
+        '-f, --log-format <format>',
+        'logging format. "json" by default.',
+        /^(json|text)$/i,
+        'json'
+    )
     .action((spawn, spawnArgs) => {
-        const config = require(commander.config);
+        const verbosity = commander.verbosity || config.verbosity;
+        const format = commander.logFormat || config.logFormat;
 
-        const logger = new winston.Logger({
-            level: config.verbosity || commander.verbosity,
-            levels: {
-                error: 0,
-                warn: 1,
-                info: 2,
-                debug: 3,
-                trace: 4,
-            },
-            transports: [
-                new winston.transports.Console({
-                    formatter(options) {
-                        return `(Vault Env) [${_.upperCase(options.level)}] - ${options.message}`;
-                    }
-                })
-            ]
-        });
+        const logger = loggerFactory('Vault Env', verbosity, format);
 
         logger.info('version %s', VERSION);
+        logger.info('verbosity "%s"', verbosity);
+
+        let config;
+        try {
+            if (!fs.existsSync(commander.config)) {
+                logger.error('configuration file doesn\'t exist: %s', commander.config);
+                process.exit(1);
+            }
+            config = require(commander.config);
+        }
+        catch (e) {
+            if (e.name === 'SyntaxError') {
+                logger.error('configuration file syntax error: %s', e.message)
+            }
+            else {
+                logger.error(e.message);
+            }
+
+            process.exit(1);
+        }
+
 
         const vaultEnv = new VaultEnv(
             {
@@ -66,7 +79,7 @@ commander
                     process.exit(parentCode);
                 }
             },
-            _.extend({logger: logger}, config)
+            _.extend({logger: logger, loggerOptions: {verbosity: verbosity, format: format}}, config)
         );
 
         _.each([
@@ -87,6 +100,7 @@ commander
             .run()
             .catch((reason) => {
                 logger.error('Unhandled promise rejection. Reason: %s', reason);
+                logger.error('Unhandled promise rejection. Trace: %s', reason.stack);
                 process.exit(1);
             });
     })
