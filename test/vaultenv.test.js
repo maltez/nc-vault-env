@@ -104,7 +104,8 @@ describe('VaultEnv', function () {
         const secrets = [
             {
                 path: `<%= env('${env}') %>/mysql`,
-                format: 'DATABASE_<%= key %>'
+                format: 'DATABASE_<%= key %>',
+                upcase: false
             },
             {
                 path: 'secret/private_key',
@@ -135,8 +136,8 @@ describe('VaultEnv', function () {
                         _.each(
                             [
                                 ['SECRET_VALUE', secretResponses['secret/private_key'].value],
-                                ['DATABASE_USERNAME', secretResponses['staging/mysql'].username],
-                                ['DATABASE_PASSWORD', secretResponses['staging/mysql'].password],
+                                ['DATABASE_username', secretResponses['staging/mysql'].username],
+                                ['DATABASE_password', secretResponses['staging/mysql'].password],
                             ],
                             (v) => expect(stream.toString()).to.include(`${v[0]}=${v[1]}`)
                         );

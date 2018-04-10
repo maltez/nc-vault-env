@@ -35,7 +35,7 @@ function templateSecret(secret) {
 
     const format = (response) =>
         _.chain(response)
-            .map((value, key) => [_.toUpper(tpl({key: key})), value])
+            .map((value, key) => [secret.upcase === undefined || secret.upcase === true ? _.toUpper(tpl({key: key})) : tpl({key: key}), value])
             .fromPairs()
             .value();
 

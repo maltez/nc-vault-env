@@ -128,7 +128,11 @@ Configuration files are written in json.
     // Note that names will be uppercased.
     {
       "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/rmq",
-      "format": "RMQ_<%= key %>"
+      "format": "RMQ_<%= key %>",
+
+      // This tells vaultenv to convert environment variable keys to uppercase (which is more common and a bit more standard).
+      // optional, by default is true
+      "upcase": true
     }
   ]
 }
