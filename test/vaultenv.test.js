@@ -97,108 +97,197 @@ describe('VaultEnv', function () {
         });
     });
 
-    it('Should resolve secret to environment variables', function () {
-        const env = `_NODE_ENV_${Math.round(Math.random() * 1000)}`;
-        process.env[env] = 'staging';
+    describe('Secrets', function() {
+        it('keys templating: upcase=false', function() {
+          const secrets = [
+              {
+                  path: `mysql`,
+                  format: 'database_<%= key %>',
+                  upcase: false
+              }
+          ];
 
-        const secrets = [
-            {
-                path: `<%= env('${env}') %>/mysql`,
-                format: 'DATABASE_<%= key %>'
-            },
-            {
-                path: 'secret/private_key',
-                format: 'SECRET_<%= key %>'
-            }
-        ];
+          const secretResponses = {
+              'mysql': {
+                  username: 'vault_is_awesome',
+                  password: 'root_is_good_password',
+              }
+          };
 
-        const secretResponses = {
-            'staging/mysql': {
-                username: 'vault_is_awesome',
-                password: 'root_is_good_password',
-            },
-            'secret/private_key': {
-                value: '-----BEGIN RSA PRIVATE KEY-----...'
-            }
-        };
+          return new Promise((resolve) => {
+              const stream = new WritableStream();
 
-        return new Promise((resolve) => {
-            const stream = new WritableStream();
+              const spawn = {
+                  command: 'env',
+                  args: [],
+                  stdio: 'ignore',
+                  options: {stdio: ['ignore', 'pipe', 'ignore']},
+                  onExit(code) {
+                      _.delay(() => {
+                          _.each(
+                              [
+                                  ['database_username', secretResponses['mysql'].username],
+                                  ['database_password', secretResponses['mysql'].password],
+                              ],
+                              (v) => expect(stream.toString()).to.include(`${v[0]}=${v[1]}`)
+                          );
+                          expect(code).to.equal(0);
+                          resolve();
+                      }, 100)
+                  }
+              };
 
-            const spawn = {
-                command: 'env',
-                args: [],
-                stdio: 'ignore',
-                options: {stdio: ['ignore', 'pipe', 'ignore']},
-                onExit(code) {
-                    _.delay(() => {
-                        _.each(
-                            [
-                                ['SECRET_VALUE', secretResponses['secret/private_key'].value],
-                                ['DATABASE_USERNAME', secretResponses['staging/mysql'].username],
-                                ['DATABASE_PASSWORD', secretResponses['staging/mysql'].password],
-                            ],
-                            (v) => expect(stream.toString()).to.include(`${v[0]}=${v[1]}`)
-                        );
-                        expect(code).to.equal(0);
-                        resolve();
-                    }, 100)
-                }
-            };
+              const vaultEnv = instantiate(spawn, _.extend({secrets}, bootOptions), secretResponses);
 
-            const vaultEnv = instantiate(spawn, _.extend({secrets}, bootOptions), secretResponses);
+              vaultEnv
+                  .run()
+                  .then((child) => child.stdout.pipe(stream))
 
-            vaultEnv
-                .run()
-                .then((child) => child.stdout.pipe(stream))
-
+          });
         });
-    });
+        it('keys templating: upcase=true', function () {
+            const env = `_NODE_ENV_${Math.round(Math.random() * 1000)}`;
+            process.env[env] = 'staging';
 
+            const secrets = [
+                {
+                    path: `<%= env('${env}') %>/mysql`,
+                    format: 'DATABASE_<%= key %>',
+                    upcase: true
+                }
+            ];
 
-
-    it('Should template secret value', function () {
-        const env = `_NODE_ENV_${Math.round(Math.random() * 1000)}`;
-        process.env[env] = 'staging';
-
-        const secrets = [
-            {
-                path: `<%= env('${env}') %>/mysql`,
-                key: 'CONNECTION_STRING',
-                format: `<%= username %>:<%= password %>@<%= env('${env}') %>`
-            }
-        ];
-
-        const secretResponses = {
-            'staging/mysql': {
-                username: 'vault_is_awesome',
-                password: 'root_is_good_password',
-            }
-        };
-
-        return new Promise((resolve) => {
-            const stream = new WritableStream();
-
-            const spawn = {
-                command: 'env',
-                args: [],
-                stdio: 'ignore',
-                options: {stdio: ['ignore', 'pipe', 'ignore']},
-                onExit(code) {
-                    _.delay(() => {
-                        expect(stream.toString()).to.include(`CONNECTION_STRING=${secretResponses['staging/mysql'].username}:${secretResponses['staging/mysql'].password}@staging`);
-                        expect(code).to.equal(0);
-                        resolve();
-                    }, 100)
+            const secretResponses = {
+                'staging/mysql': {
+                    username: 'vault_is_awesome',
+                    password: 'root_is_good_password',
                 }
             };
 
-            const vaultEnv = instantiate(spawn, _.extend({secrets}, bootOptions), secretResponses);
+            return new Promise((resolve) => {
+                const stream = new WritableStream();
 
-            vaultEnv
-                .run()
-                .then((child) => child.stdout.pipe(stream))
+                const spawn = {
+                    command: 'env',
+                    args: [],
+                    stdio: 'ignore',
+                    options: {stdio: ['ignore', 'pipe', 'ignore']},
+                    onExit(code) {
+                        _.delay(() => {
+                            _.each(
+                                [
+                                    ['DATABASE_USERNAME', secretResponses['staging/mysql'].username],
+                                    ['DATABASE_PASSWORD', secretResponses['staging/mysql'].password],
+                                ],
+                                (v) => expect(stream.toString()).to.include(`${v[0]}=${v[1]}`)
+                            );
+                            expect(code).to.equal(0);
+                            resolve();
+                        }, 100)
+                    }
+                };
 
+                const vaultEnv = instantiate(spawn, _.extend({secrets}, bootOptions), secretResponses);
+
+                vaultEnv
+                    .run()
+                    .then((child) => child.stdout.pipe(stream))
+
+            });
+        });
+        it('keys templating: default behavior', function () {
+            const env = `_NODE_ENV_${Math.round(Math.random() * 1000)}`;
+            process.env[env] = 'staging';
+
+            const secrets = [
+                {
+                    path: `<%= env('${env}') %>/mysql`,
+                    format: 'DATABASE_<%= key %>'
+                }
+            ];
+
+            const secretResponses = {
+                'staging/mysql': {
+                    username: 'vault_is_awesome',
+                    password: 'root_is_good_password',
+                }
+            };
+
+            return new Promise((resolve) => {
+                const stream = new WritableStream();
+
+                const spawn = {
+                    command: 'env',
+                    args: [],
+                    stdio: 'ignore',
+                    options: {stdio: ['ignore', 'pipe', 'ignore']},
+                    onExit(code) {
+                        _.delay(() => {
+                            _.each(
+                                [
+                                    ['DATABASE_USERNAME', secretResponses['staging/mysql'].username],
+                                    ['DATABASE_PASSWORD', secretResponses['staging/mysql'].password],
+                                ],
+                                (v) => expect(stream.toString()).to.include(`${v[0]}=${v[1]}`)
+                            );
+                            expect(code).to.equal(0);
+                            resolve();
+                        }, 100)
+                    }
+                };
+
+                const vaultEnv = instantiate(spawn, _.extend({secrets}, bootOptions), secretResponses);
+
+                vaultEnv
+                    .run()
+                    .then((child) => child.stdout.pipe(stream))
+
+            });
+        });
+
+        it('values templating: format', function () {
+            const env = `_NODE_ENV_${Math.round(Math.random() * 1000)}`;
+            process.env[env] = 'staging';
+
+            const secrets = [
+                {
+                    path: `<%= env('${env}') %>/mysql`,
+                    key: 'CONNECTION_STRING',
+                    format: `<%= username %>:<%= password %>@<%= env('${env}') %>`
+                }
+            ];
+
+            const secretResponses = {
+                'staging/mysql': {
+                    username: 'vault_is_awesome',
+                    password: 'root_is_good_password',
+                }
+            };
+
+            return new Promise((resolve) => {
+                const stream = new WritableStream();
+
+                const spawn = {
+                    command: 'env',
+                    args: [],
+                    stdio: 'ignore',
+                    options: {stdio: ['ignore', 'pipe', 'ignore']},
+                    onExit(code) {
+                        _.delay(() => {
+                            expect(stream.toString()).to.include(`CONNECTION_STRING=${secretResponses['staging/mysql'].username}:${secretResponses['staging/mysql'].password}@staging`);
+                            expect(code).to.equal(0);
+                            resolve();
+                        }, 100)
+                    }
+                };
+
+                const vaultEnv = instantiate(spawn, _.extend({secrets}, bootOptions), secretResponses);
+
+                vaultEnv
+                    .run()
+                    .then((child) => child.stdout.pipe(stream))
+
+            });
         });
     });
 });
