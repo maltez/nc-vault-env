@@ -9,7 +9,53 @@ This package provides a convenient way to launch a subprocess with environment v
 This tool fetches specified secrets then run your app with environment variables that contain secrets.
 Also, propagate received signals to subprocess.
 
-# Installation
+# Getting started.
+
+## Install vault
+Vault install [hashi-corp-vault]https://www.vaultproject.io/downloads.html 
+
+## Verifying the Installation
+```bash
+vault -v
+```
+It should return response like: 
+```bash
+Vault v0.10.1 ('756fdc..................31a6f119cd')
+```
+
+## Settings the environment variables
+We need to setup following environment variable:
+
+```bash
+export VAULT_ADDR=https://vault.devops.namecheap.net
+export VAULT_TOKEN=$(cat ~/.vault-token)
+```
+Run command
+
+```bash
+vault auth -method=ldap username=<your_AD_username>
+```
+
+Input your AD password then
+
+Expected response looks like this
+
+```bash
+Success! You are now authenticated. The token information displayed below
+is already stored in the token helper. You do NOT need to run "vault login"
+again. Future Vault requests will automatically use this token.
+
+Key                    Value
+---                    -----
+token                  <token>
+token_accessor         <token>
+token_duration         768h
+token_renewable        true
+token_policies         [default <roles>]
+token_meta_policies    default,<team>
+token_meta_username    <your_username>
+```
+## Installation of nc-vault-env
 
 NPM Package: [nc-vault-env](https://www.npmjs.com/package/nc-vault-env)
 
@@ -20,15 +66,67 @@ It currently has been tested with `6.x` and `8.x`.
 npm install -g nc-vault-env
 ```
 
-# Usage
+## Create config.json
 
-## Run
+In working directory you create config.json file
 
-```bash
-nc-vault-env -c config.json -- run_my_app.sh
+```js
+{
+  "vault": {
+    "address": "<%= env('VAULT_ADDR') %>",
+    "auth": {
+      "type": "token",
+      "config": {
+         "token": "<%= env('VAULT_TOKEN') %>"
+      }
+    }
+  },
+  "secrets": [
+    {
+      // Secret for node.js service
+      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/mysql",
+      "format": "Database=myDataBase;User=<%= user %>;Password=<%= password %>",
+      "key": "ConnectionString"
+    },
+    {
+      // For ASP.NET CORE 2
+      // Configuration for class
+      // public class MyConfiguration
+      // {
+      //    public string Key {get;set;}
+      //}
+      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/config",
+      "format": "<%= value %>",
+      "key": "key",
+    },
+    {
+      // For ASP.NET CORE 2
+      // Configuration for class
+      // public class MyConfiguration
+      // {
+      //   public ItemClass Item { get; set; }
+      // } 
+      // public class ItemClass
+      // {
+      //    public string SubItem { get; set; }
+      // }
+      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/config",
+      "format": "<%= value %>",
+      "key": "item__subitem",
+    }
+  ]
+}
 ```
 
-## CLI
+## Run Application
+
+```bash
+nc-vault-env -c config.json -- run_your_app.sh
+```
+
+...PROFIT...
+
+# CLI
 
 Options:
 
@@ -38,7 +136,7 @@ Options:
 | -v, --verbosity  | verbosity level. Supported "error", "warn", "info", "debug", "trace". Default is "info". |
 | -f, --log-format | logging format. Supported "json" and "text". Default is "json".                          |
 
-## Configuration File
+# Configuration File API
 
 Configuration files are written in json.
 
@@ -138,7 +236,7 @@ Configuration files are written in json.
 }
 ```
 
-## Templating
+# Templating
 
 Templating based on [Lodash template function](https://lodash.com/docs/#template).
 
