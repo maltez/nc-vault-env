@@ -145,7 +145,7 @@ Also, propagate received signals to subprocess.
           "key": "item__subitem",
         }
       ]
-  }
+    }
     ```
 1. Dockerfile
     For correct work in dockerfile you need 
