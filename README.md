@@ -56,7 +56,7 @@ Also, propagate received signals to subprocess.
       Success! Data written to: secret/hello
     ```
   Added secret to /secret/data in format:
-    ```js
+    ```javascript
       { 
          "foo": "world",
          "excited": "yes",
