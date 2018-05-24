@@ -4,17 +4,17 @@
 
 This package provides a convenient way to launch a subprocess with environment variables populated from Vault.
 
-# How it works?
+## How it works?
 
 This tool fetches specified secrets then run your app with environment variables that contain secrets.
 Also, propagate received signals to subprocess.
 
-# Getting started.
+## Getting started.
 
-## Install vault
-Vault install [hashi-corp-vault]https://www.vaultproject.io/downloads.html 
+1. Install Vault CLI
+Vault install [hashi-corp-vault](https://www.vaultproject.io/downloads.html)
 
-## Verifying the Installation
+1. Verifying the Installation
 ```bash
 vault -v
 ```
@@ -23,7 +23,7 @@ It should return response like:
 Vault v0.10.1 ('756fdc..................31a6f119cd')
 ```
 
-## Settings the environment variables
+1. Configure Vault CLI
 We need to setup following environment variable:
 
 ```bash
@@ -55,7 +55,7 @@ token_policies         [default <roles>]
 token_meta_policies    default,<team>
 token_meta_username    <your_username>
 ```
-## Installation of nc-vault-env
+1. Installation of nc-vault-env
 
 NPM Package: [nc-vault-env](https://www.npmjs.com/package/nc-vault-env)
 
@@ -63,10 +63,18 @@ NPM Package: [nc-vault-env](https://www.npmjs.com/package/nc-vault-env)
 It currently has been tested with `6.x` and `8.x`.
 
 ```bash
-npm install -g nc-vault-env
+RUN apt-get update \
+    && apt-get install -y build-essential curl \
+    && curl -sL https://deb.nodesource.com/setup_8.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g nc-vault-env \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY vault-env.conf.json .
+
 ```
 
-## Create config.json
+1. Create config.json
 
 In working directory you create config.json file
 
@@ -76,8 +84,17 @@ In working directory you create config.json file
     "address": "<%= env('VAULT_ADDR') %>",
     "auth": {
       "type": "token",
+      // For local env
       "config": {
          "token": "<%= env('VAULT_TOKEN') %>"
+      },
+      // For amazon infrastructure
+      "config": {
+      "role": "<your_api>",
+            "iam_server_id_header_value": "<%= env('VAULT_ADDR') %>"
+      },
+      "config": {
+        "role_id": "<your_role_id>"
       }
     }
   },
@@ -96,8 +113,23 @@ In working directory you create config.json file
       //    public string Key {get;set;}
       //}
       "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/config",
-      "format": "<%= value %>",
-      "key": "key",
+      "format": "--key <%= value %>",
+    },
+    {
+      // For ASP.NET CORE 2
+      // Configuration for class
+      // public class MyConfiguration
+      // {
+      //    public string Value1 {get;set;}
+      //    public string Value2 {get;set;}
+      // }
+      // /secret/team/env/my_config
+      //  { 
+      //     "secret1": "foo",
+      //     "secret2": "bar"
+      //  }
+      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/config",
+      "format": "--value1 <%= secret1 %> --value2 <%= secret2 %>",
     },
     {
       // For ASP.NET CORE 2
@@ -118,7 +150,14 @@ In working directory you create config.json file
 }
 ```
 
-## Run Application
+1. Dockerfile
+For correct work in dockerfile you need to add section 
+```docker
+RUN 
+
+```
+
+1. Run Application
 
 ```bash
 nc-vault-env -c config.json -- run_your_app.sh
@@ -126,7 +165,7 @@ nc-vault-env -c config.json -- run_your_app.sh
 
 ...PROFIT...
 
-# CLI
+## CLI
 
 Options:
 
@@ -136,7 +175,7 @@ Options:
 | -v, --verbosity  | verbosity level. Supported "error", "warn", "info", "debug", "trace". Default is "info". |
 | -f, --log-format | logging format. Supported "json" and "text". Default is "json".                          |
 
-# Configuration File API
+## Configuration File API
 
 Configuration files are written in json.
 
@@ -236,7 +275,7 @@ Configuration files are written in json.
 }
 ```
 
-# Templating
+## Templating
 
 Templating based on [Lodash template function](https://lodash.com/docs/#template).
 
@@ -247,7 +286,7 @@ Predefined functions:
 | env | provides access to environment variables. | <%= env('VAULT_ADDR') %>   |
 |     |                                           |                            |
 
-# Troubleshooting
+## Troubleshooting
 
 For debugging purpose you can run this locally using you vault token (token auth backend).
 This way assumes that you have access to all of your app's secrets.
