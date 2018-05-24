@@ -87,7 +87,7 @@ Also, propagate received signals to subprocess.
             "iam_server_id_header_value": "<%= env('VAULT_ADDR') %>"
           }
       },
-      {
+      { 
           // For Node.js 
           // Configuration for class
           // ENV=prod
