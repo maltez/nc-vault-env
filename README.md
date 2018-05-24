@@ -9,7 +9,7 @@ This package provides a convenient way to launch a subprocess with environment v
 This tool fetches specified secrets then run your app with environment variables that contain secrets.
 Also, propagate received signals to subprocess.
 
-## [Getting started.](#getting_started)
+## Getting started[.](#getting_started)
 
 1. Install Vault CLI
 Vault install [hashi-corp-vault](https://www.vaultproject.io/downloads.html)
@@ -63,15 +63,7 @@ NPM Package: [nc-vault-env](https://www.npmjs.com/package/nc-vault-env)
 It currently has been tested with `6.x` and `8.x`.
 
 ```bash
-RUN apt-get update \
-    && apt-get install -y build-essential curl \
-    && curl -sL https://deb.nodesource.com/setup_8.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install -g nc-vault-env \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY vault-env.conf.json .
-
+npm install -g nc-vault-env
 ```
 
 1. Create config.json
@@ -151,10 +143,16 @@ In working directory you create config.json file
 ```
 
 1. Dockerfile
-For correct work in dockerfile you need to add section 
+For correct work in dockerfile you need 
 ```docker
-RUN 
+RUN apt-get update \
+    && apt-get install -y build-essential curl \
+    && curl -sL https://deb.nodesource.com/setup_8.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g nc-vault-env \
+    && rm -rf /var/lib/apt/lists/*
 
+COPY vault-env.conf.json .
 ```
 
 1. Run Application
