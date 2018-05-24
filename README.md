@@ -52,112 +52,124 @@ Also, propagate received signals to subprocess.
     ```
 
 #### Installation of nc-vault-env
+1. Install  npm package
+  NPM Package: [nc-vault-env](https://www.npmjs.com/package/nc-vault-env)
+  `nc-vault-env` written in nodejs, so you need to install suitable versions.
+  It currently has been tested with `6.x` and `8.x`.
 
-NPM Package: [nc-vault-env](https://www.npmjs.com/package/nc-vault-env)
+  ```bash
+  npm install -g nc-vault-env
+  ```
 
-`nc-vault-env` written in nodejs, so you need to install suitable versions.
-It currently has been tested with `6.x` and `8.x`.
+1. Create config.json
+  In working directory you create config.json file
 
-```bash
-npm install -g nc-vault-env
-```
-
-- Create config.json
-
-In working directory you create config.json file
-
-```js
-{
-  "vault": {
-    "address": "<%= env('VAULT_ADDR') %>",
-    "auth": {
-      "type": "token",
-      // For local env
-      "config": {
-         "token": "<%= env('VAULT_TOKEN') %>"
+  ```js
+  {
+    "vault": {
+      "address": "<%= env('VAULT_ADDR') %>",
+      // Use type: "token" for config local environment
+      "auth": {
+        "type": "token",
+        "config": {
+           "token": "<%= env('VAULT_TOKEN') %>"
       },
-      // For amazon infrastructure
-      "config": {
-      "role": "<your_api>",
-            "iam_server_id_header_value": "<%= env('VAULT_ADDR') %>"
+      // Use type: "iam" for working with AWS 
+      "auth": {
+        "type": "iam",
+        "mount": "<%= env('<VAULT_AWS_AUTH_MOUNT>') %>",
+        "config": {
+          "role": "<%= env('ENVIRONMENT') %>",
+          "iam_server_id_header_value": "<%= env('VAULT_ADDR') %>"
+        }
+    },
+    {
+        // For Node.js 
+        // Configuration for class
+        // ENV=prod
+        "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/config",
+        "format": "<%= value %>",
+        "upcase": true
+    },
+    "secrets": [
+      {
+        // Secret for .NET Connection string looks like: 
+        "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/mysql",
+        "format": "server=<%= env('DATABASE_HOST') %>;port=<%= env('DATABASE_PORT') %>;database=<%= env('DATABASE_NAME') %>;uid=<%= username %>;pwd=<%= password %>",,
+        "key": "ConnectionString"
       },
-      "config": {
-        "role_id": "<your_role_id>"
+     {
+        // For ASP.NET CORE 2
+        // Configuration for class
+        // public class MyConfiguration
+        // {
+        //    public string Key {get;set;}
+        //}
+        "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/config",
+        "format": "<%= key %>",
+      },
+      {
+        // For ASP.NET CORE 2
+        // Configuration for class
+        // public class MyConfiguration
+        // {
+        //    public string Secret1 {get;set;}
+        //    public string Secret2 {get;set;}
+        // }
+        // /secret/team/env/my_config
+        //  { 
+        //     "Secret1": "foo",
+        //     "Secret2": "bar"
+        //  }
+        // BE AWARE: Keys from secrets has to equal to Name of configuration properties.
+        "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/config",
+        "format": "<%= key %>",
+      },
+      {
+        // For ASP.NET CORE 2
+        // Configuration for class
+        // public class MyConfiguration
+        // {
+        //   public ItemClass Item { get; set; }
+        // } 
+        // public class ItemClass
+        // {
+        //    public string SubItem { get; set; }
+        // }
+        "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/config",
+        "format": "<%= value %>",
+        "key": "item__subitem",
       }
-    }
-  },
-  "secrets": [
-    {
-      // Secret for node.js service
-      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/mysql",
-      "format": "Database=myDataBase;User=<%= user %>;Password=<%= password %>",
-      "key": "ConnectionString"
-    },
-    {
-      // For ASP.NET CORE 2
-      // Configuration for class
-      // public class MyConfiguration
-      // {
-      //    public string Key {get;set;}
-      //}
-      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/config",
-      "format": "--key <%= value %>",
-    },
-    {
-      // For ASP.NET CORE 2
-      // Configuration for class
-      // public class MyConfiguration
-      // {
-      //    public string Value1 {get;set;}
-      //    public string Value2 {get;set;}
-      // }
-      // /secret/team/env/my_config
-      //  { 
-      //     "secret1": "foo",
-      //     "secret2": "bar"
-      //  }
-      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/config",
-      "format": "--value1 <%= secret1 %> --value2 <%= secret2 %>",
-    },
-    {
-      // For ASP.NET CORE 2
-      // Configuration for class
-      // public class MyConfiguration
-      // {
-      //   public ItemClass Item { get; set; }
-      // } 
-      // public class ItemClass
-      // {
-      //    public string SubItem { get; set; }
-      // }
-      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/config",
-      "format": "<%= value %>",
-      "key": "item__subitem",
-    }
-  ]
-}
-```
+    ]
+  }
+  ```
 
-- Dockerfile
-For correct work in dockerfile you need 
-```docker
-RUN apt-get update \
-    && apt-get install -y build-essential curl \
-    && curl -sL https://deb.nodesource.com/setup_8.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install -g nc-vault-env \
-    && rm -rf /var/lib/apt/lists/*
+1. Dockerfile
+  For correct work in dockerfile you need 
+  ```docker
+  RUN apt-get update \
+      && apt-get install -y build-essential curl \
+      && curl -sL https://deb.nodesource.com/setup_8.x | bash - \
+      && apt-get install -y nodejs \
+      && npm install -g nc-vault-env \
+      && rm -rf /var/lib/apt/lists/*
 
-COPY vault-env.conf.json .
-```
+  COPY vault-env.conf.json .
+  ENTRYPOINT ["./entrypoint.sh"]
+  CMD ["run"]
+  ```
 
-- Run Application
+1. Run Application
+  Without nc-vault-env run application by command 
+  ```bash
+    exec ./app.sh
+  ```
+  With installed nc-vault-env
+  ```bash
+    exec nc-vault-env -c ./vault-env.conf.json ./app.sh
+  ```
 
-```bash
-nc-vault-env -c config.json -- run_your_app.sh
-```
-
-...PROFIT...
+1. ...PROFIT...
 
 ## CLI
 
@@ -223,6 +235,27 @@ Configuration files are written in json.
 
   // This specifies a secret in Vault to fetch.
   "secrets": [
+    // * key templating
+    //
+    // secret like this:
+    // {
+    //   "username": "awesome",
+    //   "password: "securePa$$word"
+    // }
+    //
+    // should produce multiple environment variables like this:
+    // RMQ_USERNAME="awesome"
+    // RMQ_PASSWORD="securePa$$word"
+    //
+    // Note that names will be uppercased.
+    {
+      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/rmq",
+      "format": "RMQ_<%= key %>",
+
+      // This tells vault-env to convert environment variable keys to uppercase (which is more common and a bit more standard).
+      // optional, by default is true
+      "upcase": true
+    },
     // There are two different behaviours:
 
     // * value templating
@@ -242,28 +275,6 @@ Configuration files are written in json.
       "format": "user id=<%= username %>;password=<%= password %>",
       // env variable to populate
       "key": "ConnectionString"
-    },
-
-    // * key templating
-    //
-    // secret like this:
-    // {
-    //   "username": "awesome",
-    //   "password: "securePa$$word"
-    // }
-    //
-    // should produce multiple environment variables like this:
-    // RMQ_USERNAME="awesome"
-    // RMQ_PASSWORD="securePa$$word"
-    //
-    // Note that names will be uppercased.
-    {
-      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/rmq",
-      "format": "RMQ_<%= key %>",
-
-      // This tells vaultenv to convert environment variable keys to uppercase (which is more common and a bit more standard).
-      // optional, by default is true
-      "upcase": true
     }
   ]
 }
