@@ -14,7 +14,7 @@ Also, propagate received signals to subprocess.
 1. Install Vault CLI
 Vault install [hashi-corp-vault](https://www.vaultproject.io/downloads.html)
 
-1. Verifying the Installation
+2. Verifying the Installation
 ```bash
 vault -v
 ```
@@ -23,7 +23,7 @@ It should return response like:
 Vault v0.10.1 ('756fdc..................31a6f119cd')
 ```
 
-1. Configure Vault CLI
+3. Configure Vault CLI
 We need to setup following environment variable:
 
 ```bash
@@ -55,7 +55,7 @@ token_policies         [default <roles>]
 token_meta_policies    default,<team>
 token_meta_username    <your_username>
 ```
-1. Installation of nc-vault-env
+4. Installation of nc-vault-env
 
 NPM Package: [nc-vault-env](https://www.npmjs.com/package/nc-vault-env)
 
@@ -66,7 +66,7 @@ It currently has been tested with `6.x` and `8.x`.
 npm install -g nc-vault-env
 ```
 
-1. Create config.json
+5. Create config.json
 
 In working directory you create config.json file
 
@@ -142,7 +142,7 @@ In working directory you create config.json file
 }
 ```
 
-1. Dockerfile
+6. Dockerfile
 For correct work in dockerfile you need 
 ```docker
 RUN apt-get update \
@@ -155,7 +155,7 @@ RUN apt-get update \
 COPY vault-env.conf.json .
 ```
 
-1. Run Application
+7. Run Application
 
 ```bash
 nc-vault-env -c config.json -- run_your_app.sh
