@@ -166,7 +166,6 @@ Also, propagate received signals to subprocess.
     ```bash
       exec nc-vault-env -c ./vault-env.conf.json ./app.sh
     ```
-1. ...PROFIT...
 
 ## CLI
 
