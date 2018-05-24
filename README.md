@@ -50,7 +50,11 @@ Also, propagate received signals to subprocess.
     token_meta_policies    default,<team>
     token_meta_username    <your_username>
     ```
-
+1. Add multiple values in secret
+    ```bash
+      $ vault kv put secret/data foo=world excited=yes count=1
+      Success! Data written to: secret/hello
+    ```
 #### Installation of nc-vault-env
 1. Install  npm package
     NPM Package: [nc-vault-env](https://www.npmjs.com/package/nc-vault-env)
@@ -64,7 +68,7 @@ Also, propagate received signals to subprocess.
 1. Create config.json
     In working directory you create config.json file
 
-    ```js
+    ```javascript
     {
       "vault": {
         "address": "<%= env('VAULT_ADDR') %>",
@@ -79,7 +83,7 @@ Also, propagate received signals to subprocess.
           "type": "iam",
           "mount": "<%= env('<VAULT_AWS_AUTH_MOUNT>') %>",
           "config": {
-            "role": "<%= env('ENVIRONMENT') %>",
+            "role": "<%= env('ROLE') %>",
             "iam_server_id_header_value": "<%= env('VAULT_ADDR') %>"
           }
       },
