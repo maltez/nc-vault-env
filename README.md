@@ -11,51 +11,47 @@ Also, propagate received signals to subprocess.
 
 ## Getting started[.](#getting_started)
 
-- Install Vault CLI
-Vault install [hashi-corp-vault](https://www.vaultproject.io/downloads.html)
+#### Install Vault CLI
+1. Vault install [hashi-corp-vault](https://www.vaultproject.io/downloads.html)
+1. Verifying the Installation `vault -v`. It should return response like: 
+    ```bash
+    Vault v0.10.1 ('756fdc..................31a6f119cd')
+    ```
 
-- Verifying the Installation
-```bash
-vault -v
-```
-It should return response like: 
-```bash
-Vault v0.10.1 ('756fdc..................31a6f119cd')
-```
+1. Configure Vault CLI
+    We need to setup following environment variable:
+    
+    ```bash
+    export VAULT_ADDR=https://vault.devops.namecheap.net
+    export VAULT_TOKEN=$(cat ~/.vault-token)
+    ```
+1. Run command to sign in into Vault server
+    
+    ```bash
+    vault auth -method=ldap username=<your_AD_username>
+    ```
+    
+    Input your AD password then
+    
+    Expected response looks like this
+    
+    ```bash
+    Success! You are now authenticated. The token information displayed below
+    is already stored in the token helper. You do NOT need to run "vault login"
+    again. Future Vault requests will automatically use this token.
+    
+    Key                    Value
+    ---                    -----
+    token                  <token>
+    token_accessor         <token>
+    token_duration         768h
+    token_renewable        true
+    token_policies         [default <roles>]
+    token_meta_policies    default,<team>
+    token_meta_username    <your_username>
+    ```
 
-- Configure Vault CLI
-We need to setup following environment variable:
-
-```bash
-export VAULT_ADDR=https://vault.devops.namecheap.net
-export VAULT_TOKEN=$(cat ~/.vault-token)
-```
-Run command
-
-```bash
-vault auth -method=ldap username=<your_AD_username>
-```
-
-Input your AD password then
-
-Expected response looks like this
-
-```bash
-Success! You are now authenticated. The token information displayed below
-is already stored in the token helper. You do NOT need to run "vault login"
-again. Future Vault requests will automatically use this token.
-
-Key                    Value
----                    -----
-token                  <token>
-token_accessor         <token>
-token_duration         768h
-token_renewable        true
-token_policies         [default <roles>]
-token_meta_policies    default,<team>
-token_meta_username    <your_username>
-```
-- Installation of nc-vault-env
+#### Installation of nc-vault-env
 
 NPM Package: [nc-vault-env](https://www.npmjs.com/package/nc-vault-env)
 
