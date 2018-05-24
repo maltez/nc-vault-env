@@ -9,7 +9,7 @@ This package provides a convenient way to launch a subprocess with environment v
 This tool fetches specified secrets then run your app with environment variables that contain secrets.
 Also, propagate received signals to subprocess.
 
-## Getting started.
+## [Getting started.](#getting_started)
 
 1. Install Vault CLI
 Vault install [hashi-corp-vault](https://www.vaultproject.io/downloads.html)
