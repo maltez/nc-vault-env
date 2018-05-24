@@ -56,13 +56,13 @@ Also, propagate received signals to subprocess.
       Success! Data written to: secret/hello
     ```
   Added secret to /secret/data in format:
-    ```javascript
-      { 
-         "foo": "world",
-         "excited": "yes",
-         "count":1,
-      }
-    ```
+  ```javascript
+    { 
+      "foo": "world",
+      "excited": "yes",
+      "count":1,
+    }
+  ```
 #### Installation of nc-vault-env
 1. Install  npm package
     NPM Package: [nc-vault-env](https://www.npmjs.com/package/nc-vault-env)
