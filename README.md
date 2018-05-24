@@ -55,6 +55,14 @@ Also, propagate received signals to subprocess.
       $ vault kv put secret/data foo=world excited=yes count=1
       Success! Data written to: secret/hello
     ```
+  Added secret to /secret/data in format:
+    ```js
+      { 
+         "foo": "world",
+         "excited": "yes",
+         "count":1,
+      }
+    ```
 #### Installation of nc-vault-env
 1. Install  npm package
     NPM Package: [nc-vault-env](https://www.npmjs.com/package/nc-vault-env)
@@ -100,7 +108,8 @@ Also, propagate received signals to subprocess.
           // Secret for .NET Connection string looks like: 
           "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/mysql",
           "format": "server=<%= env('DATABASE_HOST') %>;port=<%= env('DATABASE_PORT') %>;database=<%= env('DATABASE_NAME') %>;uid=<%= username %>;pwd=<%= password %>",,
-          "key": "ConnectionString"
+          "key": "ConnectionString",
+          "upcase": false
         },
         {
           // For ASP.NET CORE 2
@@ -128,6 +137,7 @@ Also, propagate received signals to subprocess.
           // BE AWARE: Keys from secrets has to equal to Name of configuration properties.
           "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/config",
           "format": "<%= key %>",
+          "upcase": false
         },
         {
           // For ASP.NET CORE 2
@@ -143,6 +153,7 @@ Also, propagate received signals to subprocess.
           "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/config",
           "format": "<%= value %>",
           "key": "item__subitem",
+          "upcase": false
         }
       ]
     }
