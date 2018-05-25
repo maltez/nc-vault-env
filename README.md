@@ -282,7 +282,7 @@ nc-vault-env -c config.json -f text -v trace -- run_my_app.sh
   - For passing connection string from the secrets use following secret configuration:
     ```javascript
       {
-          "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/mysql",
+          "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/mysql/creds/rw",
           "format": "server=<%= env('DATABASE_HOST') %>;port=<%= env('DATABASE_PORT') %>;database=<%= env('DATABASE_NAME') %>;uid=<%= username %>;pwd=<%= password %>",
           "key": "ConnectionString",
           "upcase": false
