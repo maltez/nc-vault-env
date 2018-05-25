@@ -55,7 +55,7 @@ but do it on your own risk.
 
 1. Add secret to the vault.
     ```bash
-      $  vault kv put secret/data password=pass**123 login=jack_sparrow
+      $  vault write secret/data password=pass**123 login=jack_sparrow
       Success! Data written to: secret/data
     ```
 #### Install & configure nc-vault-env
@@ -270,8 +270,8 @@ nc-vault-env -c config.json -f text -v trace -- run_my_app.sh
 #### Add multiple items in value
   1. For adding multiple values in vault 
       ```bash
-        $ vault kv put secret/data foo=world excited=yes count=1
-        Success! Data written to: secret/hello
+        $ vault write secret/data foo=world excited=yes count=1
+        Success! Data written to: secret/data
       ```
   1. Secret was added to /secret/data in format:
       ```javascript
@@ -314,8 +314,8 @@ nc-vault-env -c config.json -f text -v trace -- run_my_app.sh
       ```
   1. You add secrets with following name:
       ```bash
-        $ vault kv put secret/data Secret1=secret Secret2=true
-        Success! Data written to: secret/hello
+        $ vault write secret/data test=12 Secret1=secret Secret2=true
+        Success! Data written to: secret/data
       ```
   1. And create secret config section in config.json:
       ```javascript
