@@ -11,14 +11,22 @@ Also, propagate received signals to subprocess.
 
 ## Getting started[.](#getting_started)
 
+#### For Windows users only ;)
+
+Generally you can also try to execute steps below w/o use of Docker 
+but do it on your own risk. 
+
+1. Install Docker
+1. `docker run --rm -it -v ${PWD}:/codebase node:8 bash`
+1. `cd codebase/`
+
 #### Add secrets to Vault
 1. Vault install [hashi-corp-vault](https://www.vaultproject.io/downloads.html)
 1. Configure Vault CLI
     We need to setup following environment variable:
     
     ```bash
-    export VAULT_ADDR=<your_vault_address(f.e.https://vault.devops.namecheap.net)>
-    export VAULT_TOKEN=$(cat ~/.vault-token)
+    export VAULT_ADDR=https://vault.devops.namecheap.net
     ```
 1. Run command to sign in into Vault server
     ```bash
@@ -47,7 +55,7 @@ Also, propagate received signals to subprocess.
 
 1. Add secret to the vault.
     ```bash
-      $  vault kv put secret/data password=pass**123
+      $  vault kv put secret/data password=pass**123 login=jack_sparrow
       Success! Data written to: secret/data
     ```
 #### Install & configure nc-vault-env
@@ -77,17 +85,24 @@ Also, propagate received signals to subprocess.
       "secrets": [
         {
           "path": "secret/data",
-          "format": "<%= key %>",
+          "format": "MY_ENV_<%= key %>",
           "upcase": true
         }
       ]
     }
     ```
+1. Export Vault auth token to env variable
+
+    ```bash
+    $ export VAULT_TOKEN=$(cat ~/.vault-token)
+    ```
 1. Run command 
     ```bash
-    nc-vault-env -c ./config.json -- printenv
+    $ nc-vault-env -c ./config.json -- printenv
+ 
+    MY_ENV_PASSWORD=pass**123
+    MY_ENV_LOGIN=jack_sparrow
     ```
-    In the list of environment variables you find PASSWORD=pass**123
     WARNING: This command working on linux, ubuntu and macOS only.
 #### Integrate with your application
 1. For correct work in dockerfile you need add following lines:
