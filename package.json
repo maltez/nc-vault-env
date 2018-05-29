@@ -1,6 +1,6 @@
 {
   "name": "nc-vault-env",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Read and set environmental variables for processes from Vault",
   "main": "./lib/VaultEnv.js",
   "scripts": {
