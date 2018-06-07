@@ -91,6 +91,8 @@ class VaultEnv {
      * @private
      */
     __exec(env) {
+        this.__logger.info('Variables passed to the process', _.extend({}, this.__spawn.options.env, _.mapValues(env, () => '****')));
+
         const child = this.__child = spawn(
             this.__spawn.command,
             this.__spawn.args,
