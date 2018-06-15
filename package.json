@@ -12,6 +12,9 @@
     "type": "git",
     "url": "https://git.namecheap.net/scm/nclibs/vault-env.git"
   },
+  "engines": {
+    "node": ">=6.14"
+  },
   "author": "Vladimir Doba <vladimir.doba@namecheap.com>",
   "license": "UNLICENSED",
   "bin": {

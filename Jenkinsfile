@@ -12,6 +12,9 @@ def VERSIONS_MATRIX = [
         ],
         [
                 node : '9'
+        ],
+        [
+                node : '10'
         ]
 ]
 
