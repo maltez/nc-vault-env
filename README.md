@@ -78,7 +78,7 @@ but do it on your own risk.
         "auth": {
           "type": "token",
           "config": {
-              "token": "env('VAULT_TOKEN')"
+              "token": "<%= env('VAULT_TOKEN') %>"
           }
         }
       },
