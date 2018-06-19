@@ -6,3 +6,45 @@ $ npm version [major | minor | patch]
 $ git push && git push --tags
 $ npm publish
 ```
+
+
+## Local experiments
+
+```bash
+#1 Up test environment and virtual net
+docker-compose up -d
+#2 Go to vault client
+docker-compose exec vault-client sh
+```
+```bash
+#3 create a secrets
+vault kv put secret/data password=pass**123 login=jack_sparrow
+exit
+```
+```bash
+#4 go to the nc-vualt-env
+docker-compose exec nc-vault-env bash
+#5 play
+node bin/cli.js -c ./config.json -- printenv
+```
+
+PROFIT
+
+Raw API calls
+```bash
+#1
+docker-compose exec nc-vault-env bash
+# then play
+curl \
+    --header "X-Vault-Token: $VAULT_TOKEN" \
+    --request LIST \
+    "$VAULT_ADDR/v1/auth/token/accessors"
+curl \
+    --header "X-Vault-Token: $VAULT_TOKEN" \
+    --request GET \
+    "$VAULT_ADDR/v1/auth/token/lookup-self"
+curl \
+    --header "X-Vault-Token: $VAULT_TOKEN" \
+    --request LIST \
+    "$VAULT_ADDR/v1/secret/"
+```

@@ -78,7 +78,7 @@ but do it on your own risk.
         "auth": {
           "type": "token",
           "config": {
-              "token": "env('VAULT_TOKEN')"
+              "token": "<%= env('VAULT_TOKEN') %>"
           }
         }
       },
@@ -127,6 +127,13 @@ Options:
 | -c, --config     | path to configuration file.                                                              |
 | -v, --verbosity  | verbosity level. Supported "error", "warn", "info", "debug", "trace". Default is "info". |
 | -f, --log-format | logging format. Supported "json" and "text". Default is "json".                          |
+
+#### Dummy mode
+When you just want to skip secrets fetching and just run app/script without them we may use *dummy mode*.
+Just pass env variable `VAULTENV_DUMMY=true`, bash example:
+```bash
+VAULTENV_DUMMY=true nc-vault-env -c ./vault-env.conf.json -- ./<your_start_script>.sh
+```
 
 ## Configuration File API
 
@@ -203,8 +210,7 @@ Configuration files are written in json.
       // optional, by default is true
       "upcase": true
     },
-    // There are two different behaviours:
-
+    // Another behaviour:
     // * value templating
     //
     // secret like this:
@@ -222,6 +228,53 @@ Configuration files are written in json.
       "format": "user id=<%= username %>;password=<%= password %>",
       // env variable to populate
       "key": "ConnectionString"
+    },
+    // Another behaviour:
+    // * value templating with folders
+    //
+    // secrets like this:
+    //  /shared
+    // path: secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/shared/mssql
+    // {
+    //   "username": "awesome",
+    //   "password: "securePa$$word"
+    // }
+    // path: secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/shared/rmq
+    // {
+    //   "username": "awesome2",
+    //   "password: "!securePa$$word"
+    // }
+    //
+    //  /local
+    // path: secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/local/newrelic
+    // {
+    //   "apikey": "awesomesecurePa$$word"
+    // }
+    //
+    // should produce environment variables based on content of the "shared" and "local"
+    // result will be like this:
+    //
+    // MSSQL:USERNAME="awesome"
+    // MSSQL:PASSWORD="securePa$$word"
+    // RMQ:USERNAME="awesome2"
+    // RMQ:PASSWORD="!securePa$$word"
+    // NEWRELIC:APIKEY="awesomesecurePa$$word"
+    //
+    {
+      // path to secret
+      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/shared",
+      // env name template
+      "format": "<%= folder %>:<%= key %>",
+      "upcase": true,
+      // fetch folders and pass them to value templating
+      "folder": true
+    },
+    {
+      // and so on
+      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/local",
+      "format": "<%= folder %>:<%= key %>",
+      "upcase": true,
+      "folder": true
     }
   ]
 }

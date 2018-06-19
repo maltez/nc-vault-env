@@ -12,6 +12,9 @@
     "type": "git",
     "url": "https://git.namecheap.net/scm/nclibs/vault-env.git"
   },
+  "engines": {
+    "node": ">=6.14"
+  },
   "author": "Vladimir Doba <vladimir.doba@namecheap.com>",
   "license": "UNLICENSED",
   "bin": {
@@ -23,7 +26,7 @@
     "commander": "^2.10.0",
     "lodash": "^4.17.4",
     "mockery": "^2.1.0",
-    "node-vault-client": "^0.3.2",
+    "node-vault-client": "^0.3.3",
     "winston": "^2.3.1"
   },
   "devDependencies": {

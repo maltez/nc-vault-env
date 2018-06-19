@@ -29,7 +29,7 @@ class VaultEnv {
 
     run() {
         return Promise.resolve()
-            .then(() => this.__getEnv(this.__config.secrets))
+            .then(() => process.env.VAULTENV_DUMMY === 'true' ? {} : this.__getEnv(this.__config.secrets))
             .then((env) => this.__exec(env));
     }
 
@@ -54,7 +54,7 @@ class VaultEnv {
     /**
      * @private
      */
-    __getEnv(secrets) {
+    __getVaultClient() {
         const vaultConfig = _.cloneDeep(this.__config.vault);
         this.__logger.debug(
             `creating vault api client (%s)`,
@@ -65,26 +65,64 @@ class VaultEnv {
             vaultConfig.auth.config.credentials = AWS.CredentialProviderChain.defaultProviders;
         }
 
-        const vault = new VaultClient({
-            api: {
+        return new VaultClient({
+            api:    {
                 url: vaultConfig.address
             },
-            auth: vaultConfig.auth,
+            auth:   vaultConfig.auth,
             logger: this.__loggerOptions ? loggerFactory(
                 'Vault Env / Client',
                 this.__loggerOptions.verbosity,
                 this.__loggerOptions.format
             ) : this.__logger
         });
+    }
+
+    /**
+     * @private
+     */
+    __getEnv(secrets) {
+        const vault = this.__getVaultClient();
 
         return Promise.all(
             _.map(secrets, (secret) => {
+                if (secret.folder) {
+                    this.__logger.info('list path %s', secret.path);
+                    return this.__getEnvsForFolder(vault, secret);
+                }
                 this.__logger.info('reading path %s', secret.path);
-                return vault
-                    .read(secret.path)
-                    .then((response) => secret.format(response.getData()))
+                return this.__getEnvsForPath(vault, secret);
             })
         ).then((values) => _.extend(...values))
+    }
+
+    /**
+     * @private
+     */
+    __getEnvsForFolder(vault, secret) {
+        return vault
+            .list(secret.path)
+            .then((response) => {
+                return Promise.all(
+                    response.getData().keys
+                        .map((key) => vault
+                            .read(`${secret.path}/${key}`)
+                            .then((response) => [key, response.getData()])
+                        )
+                );
+            })
+            .then((folders) => {
+                return secret.format(folders)
+            })
+    }
+
+    /**
+     * @private
+     */
+    __getEnvsForPath(vault, secret) {
+        return vault
+            .read(secret.path)
+            .then((response) => secret.format(response.getData()));
     }
 
     /**

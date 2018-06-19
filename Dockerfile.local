@@ -1,0 +1,9 @@
+FROM node:6
+
+WORKDIR /app
+
+COPY . .
+
+RUN npm install -q --no-progress
+
+CMD ["npm", "run", "test-ci"]

@@ -1,0 +1,19 @@
+{
+  "vault": {
+    "address": "<%= env('VAULT_ADDR') %>",
+    "auth": {
+      "type": "token",
+      "config": {
+        "token": "<%= env('VAULT_TOKEN') %>"
+      }
+    }
+  },
+  "secrets": [
+    {
+      "path": "secret",
+      "format": "MY_ENV_<%= folder %>_<%= key %>",
+      "folder": true,
+      "upcase": true
+    }
+  ]
+}
