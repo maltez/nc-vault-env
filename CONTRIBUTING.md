@@ -15,9 +15,13 @@ $ npm publish
 docker-compose up -d
 #2 Go to vault client
 docker-compose exec vault-client sh
+```
+```bash
 #3 create a secrets
 vault kv put secret/data password=pass**123 login=jack_sparrow
 exit
+```
+```bash
 #4 go to the nc-vualt-env
 docker-compose exec nc-vault-env bash
 #5 play
@@ -28,6 +32,9 @@ PROFIT
 
 Raw API calls
 ```bash
+#1
+docker-compose exec nc-vault-env bash
+# then play
 curl \
     --header "X-Vault-Token: $VAULT_TOKEN" \
     --request LIST \
