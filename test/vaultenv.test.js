@@ -42,6 +42,14 @@ describe('VaultEnv', function () {
                     }
                 });
             }
+
+            list(path) {
+                return Promise.resolve({
+                    getData() {
+                        return {keys: Object.keys(secretResponses[path])};
+                    }
+                });
+            }
         });
 
         const VaultEnv = require('../src/VaultEnv');
@@ -275,6 +283,96 @@ describe('VaultEnv', function () {
                     onExit(code) {
                         _.delay(() => {
                             expect(stream.toString()).to.include(`CONNECTION_STRING=${secretResponses['staging/mysql'].username}:${secretResponses['staging/mysql'].password}@staging`);
+                            expect(code).to.equal(0);
+                            resolve();
+                        }, 100)
+                    }
+                };
+
+                const vaultEnv = instantiate(spawn, _.extend({secrets}, bootOptions), secretResponses);
+
+                vaultEnv
+                    .run()
+                    .then((child) => child.stdout.pipe(stream))
+
+            });
+        });
+
+
+        it('keys templating: upcase=false', function () {
+            const envName = `_NODE_ENV_${Math.round(Math.random() * 1000)}`;
+            const envValue = `VALUE_${Math.round(Math.random() * 1000)}`;
+            process.env[envName] = envValue;
+
+            const secrets = [{
+                "path": `secret/re/<%= env('${envName}') %>/shared`,
+                "format": "<%= folder %>:<%= key %>",
+                "folder": true
+            },{
+                "path": `secret/re/<%= env('${envName}') %>/mss_name`,
+                "format": "<%= folder %>:<%= key %>",
+                "folder": true,
+                "upcase": false
+            }];
+            /*
+            secret/re/<env name>/shared/
+                /rmq
+                    'username': 'ccc'
+                    'password': 'ddd'
+                /newrelic
+                    'apikey': 'zzz'
+            secret/re/<env name>/mss_name/
+                /some_config_key
+                    'value': 'aaa'
+             */
+            const secretResponses = {
+                // list mock
+                [`secret/re/${envValue}/shared`]:   {
+                    rmq:      {},
+                    newrelic: {}
+                },
+                [`secret/re/${envValue}/mss_name`]: {
+                    some_config_key: {},
+                },
+
+                // read mock
+                [`secret/re/${envValue}/shared/rmq`]: {
+                    username: 'vault_is_awesome',
+                    password: 'root_is_good_password',
+                },
+                [`secret/re/${envValue}/shared/newrelic`]: {
+                    apikey: 'vault_is_powerful',
+                },
+                [`secret/re/${envValue}/mss_name/some_config_key`]: {
+                    Value: 'another_secret_array_element',
+                },
+            };
+            return new Promise((resolve) => {
+                const stream = new WritableStream();
+
+                const spawn = {
+                    command: 'env',
+                    args:    [],
+                    stdio:   'ignore',
+                    options: {stdio: ['ignore', 'pipe', 'ignore']},
+                    onExit(code) {
+                        _.delay(() => {
+                            const output = stream.toString();
+                            _.each(
+                                [
+                                    /*
+                                    RMQ:USERNAME=vault_is_awesome
+                                    RMQ:PASSWORD=root_is_good_password
+                                    NEWRELIC:APIKEY=vault_is_powerful
+                                    some_config_key:Value=another_secret_array_element
+                                     */
+                                    ['RMQ:USERNAME', secretResponses[`secret/re/${envValue}/shared/rmq`].username],
+                                    ['RMQ:PASSWORD', secretResponses[`secret/re/${envValue}/shared/rmq`].password],
+                                    ['NEWRELIC:APIKEY', secretResponses[`secret/re/${envValue}/shared/newrelic`].apikey],
+                                    ['some_config_key:Value', secretResponses[`secret/re/${envValue}/mss_name/some_config_key`].Value],
+                                ],
+                                (v) => expect(output).to.include(`${v[0]}=${v[1]}`)
+                            );
                             expect(code).to.equal(0);
                             resolve();
                         }, 100)
