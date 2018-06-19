@@ -128,7 +128,7 @@ describe('VaultEnv', function () {
                     }, 100);
                 }
             };
-            const vaultEnv = instantiate(spawn, {secrets: fakeSecrets, ...bootOptions});
+            const vaultEnv = instantiate(spawn, _.extend({secrets: fakeSecrets}, bootOptions));
 
             vaultEnv
                 .run()
