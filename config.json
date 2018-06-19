@@ -10,8 +10,9 @@
   },
   "secrets": [
     {
-      "path": "secret/data",
-      "format": "MY_ENV_<%= key %>",
+      "path": "secret",
+      "format": "MY_ENV_<%= folder %>_<%= key %>",
+      "folder": true,
       "upcase": true
     }
   ]

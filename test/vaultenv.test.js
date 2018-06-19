@@ -105,6 +105,10 @@ describe('VaultEnv', function () {
         });
     });
 
+    afterEach(() => {
+        process.env.VAULTENV_DUMMY = undefined;
+    });
+
     it('Should skip vault envs when dummy mode', function () {
         const fakeSecrets = [
             {
@@ -134,10 +138,6 @@ describe('VaultEnv', function () {
                 .run()
                 .then((child) => child.stdout.pipe(stream))
         })
-            .catch(e => {
-                process.env.VAULTENV_DUMMY = undefined;
-                throw e;
-            });
     });
 
     describe('Secrets', function() {
