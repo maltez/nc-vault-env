@@ -203,8 +203,7 @@ Configuration files are written in json.
       // optional, by default is true
       "upcase": true
     },
-    // There are two different behaviours:
-
+    // Another behaviour:
     // * value templating
     //
     // secret like this:
@@ -222,6 +221,53 @@ Configuration files are written in json.
       "format": "user id=<%= username %>;password=<%= password %>",
       // env variable to populate
       "key": "ConnectionString"
+    },
+    // Another behaviour:
+    // * value templating with folders
+    //
+    // secrets like this:
+    //  /shared
+    // path: secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/shared/mssql
+    // {
+    //   "username": "awesome",
+    //   "password: "securePa$$word"
+    // }
+    // path: secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/shared/rmq
+    // {
+    //   "username": "awesome2",
+    //   "password: "!securePa$$word"
+    // }
+    //
+    //  /local
+    // path: secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/local/newrelic
+    // {
+    //   "apikey": "awesomesecurePa$$word"
+    // }
+    //
+    // should produce environment variables based on content of the "shared" and "local"
+    // result will be like this:
+    //
+    // MSSQL:USERNAME="awesome"
+    // MSSQL:PASSWORD="securePa$$word"
+    // RMQ:USERNAME="awesome2"
+    // RMQ:PASSWORD="!securePa$$word"
+    // NEWRELIC:APIKEY="awesomesecurePa$$word"
+    //
+    {
+      // path to secret
+      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/shared",
+      // env name template
+      "format": "<%= folder %>:<%= key %>",
+      "upcase": true,
+      // fetch folders and pass them to value templating
+      "folder": true
+    },
+    {
+      // and so on
+      "path": "secret/my_awesome_team_namespace/<%= env('ENVIRONMENT') %>/local",
+      "format": "<%= folder %>:<%= key %>",
+      "upcase": true,
+      "folder": true
     }
   ]
 }
