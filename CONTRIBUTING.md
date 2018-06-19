@@ -10,11 +10,19 @@ $ npm publish
 
 ## Local experiments
 
-1. `docker-compose up -d`
-2. `docker-compose exec vault-client sh`
-3. `vault kv put secret/data password=pass**123 login=jack_sparrow`
-4. `docker-compose exec nc-vault-env bash`
-5. `node bin/cli.js -c ./config.json -- printenv`
+```bash
+#1 Up test environment and virtual net
+docker-compose up -d
+#2 Go to vault client
+docker-compose exec vault-client sh
+#3 create a secrets
+vault kv put secret/data password=pass**123 login=jack_sparrow
+exit
+#4 go to the nc-vualt-env
+docker-compose exec nc-vault-env bash
+#5 play
+node bin/cli.js -c ./config.json -- printenv
+```
 
 PROFIT
 
@@ -28,4 +36,8 @@ curl \
     --header "X-Vault-Token: $VAULT_TOKEN" \
     --request GET \
     "$VAULT_ADDR/v1/auth/token/lookup-self"
+curl \
+    --header "X-Vault-Token: $VAULT_TOKEN" \
+    --request LIST \
+    "$VAULT_ADDR/v1/secret/"
 ```

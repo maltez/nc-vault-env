@@ -79,6 +79,23 @@ class VaultEnv {
 
         return Promise.all(
             _.map(secrets, (secret) => {
+                if (secret.folder) {
+                    this.__logger.info('list path %s', secret.path);
+                    return vault
+                        .list(secret.path)
+                        .then((response) => {
+                            return Promise.all(
+                                response.getData().keys
+                                    .map((key) => vault
+                                        .read(`${secret.path}/${key}`)
+                                        .then((response) => [key, response.getData()])
+                                    )
+                            );
+                        })
+                        .then((folders) => {
+                            return secret.format(folders)
+                        })
+                }
                 this.__logger.info('reading path %s', secret.path);
                 return vault
                     .read(secret.path)
