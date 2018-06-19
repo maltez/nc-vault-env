@@ -29,7 +29,7 @@ class VaultEnv {
 
     run() {
         return Promise.resolve()
-            .then(() => this.__getEnv(this.__config.secrets))
+            .then(() => process.env.VAULTENV_DUMMY === 'true' ? {} : this.__getEnv(this.__config.secrets))
             .then((env) => this.__exec(env));
     }
 

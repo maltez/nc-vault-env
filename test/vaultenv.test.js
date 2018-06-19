@@ -105,6 +105,41 @@ describe('VaultEnv', function () {
         });
     });
 
+    it('Should skip vault envs when dummy mode', function () {
+        const fakeSecrets = [
+            {
+                path: `mysql`,
+                format: 'database_<%= key %>',
+                upcase: false
+            }
+        ];
+        return new Promise((resolve) => {
+            process.env.VAULTENV_DUMMY = 'true';
+            const stream = new WritableStream();
+            const spawn = {
+                command: 'echo',
+                args:    ['Hello, Vault!'],
+                options: {stdio: ['ignore', 'pipe', 'ignore']},
+                onExit(code) {
+                    _.delay(() => {
+                        expect(stream.toString()).to.match(/Hello,\sVault!\n/);
+                        expect(code).to.equal(0);
+                        resolve();
+                    }, 100);
+                }
+            };
+            const vaultEnv = instantiate(spawn, {secrets: fakeSecrets, ...bootOptions});
+
+            vaultEnv
+                .run()
+                .then((child) => child.stdout.pipe(stream))
+        })
+            .catch(e => {
+                process.env.VAULTENV_DUMMY = undefined;
+                throw e;
+            });
+    });
+
     describe('Secrets', function() {
         it('keys templating: upcase=false', function() {
           const secrets = [
