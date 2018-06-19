@@ -128,6 +128,13 @@ Options:
 | -v, --verbosity  | verbosity level. Supported "error", "warn", "info", "debug", "trace". Default is "info". |
 | -f, --log-format | logging format. Supported "json" and "text". Default is "json".                          |
 
+#### Dummy mode
+When you just want to skip secrets fetching and just run app/script without them we may use *dummy mode*.
+Just pass env variable `VAULTENV_DUMMY=true`, bash example:
+```bash
+VAULTENV_DUMMY=true nc-vault-env -c ./vault-env.conf.json -- ./<your_start_script>.sh
+```
+
 ## Configuration File API
 
 Configuration files are written in json.
