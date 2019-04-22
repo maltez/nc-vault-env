@@ -116,7 +116,7 @@ but do it on your own risk.
             && rm -rf /var/lib/apt/lists/*
 
       COPY vault-env.conf.json .
-      CMD ["nc-vault-env -c ./vault-env.conf.json -- ./<your_start_script>.sh"]
+      CMD ["nc-vault-env", "-c", "./vault-env.conf.json", "--", "./<your_start_script>.sh"]
     ```
 ## CLI
 
@@ -157,6 +157,7 @@ Configuration files are written in json.
       // * iam - see https://www.vaultproject.io/docs/auth/aws.html#iam-auth-method
       // * appRole - see https://www.vaultproject.io/docs/auth/approle.html
       "type": "token",
+      "mount": "<%= env('VAULT_AWS_AUTH_MOUNT') %>",
 
       // Auth backend configuration
 
@@ -341,7 +342,7 @@ nc-vault-env -c config.json -f text -v trace -- run_my_app.sh
               "type": "iam",
               "mount": "<%= env('<VAULT_AWS_AUTH_MOUNT>') %>",
               "config": {
-                "role": "<%= env('ROLE') %>",
+                "role": "<%= env('VAULT_ROLE') %>",
                 "iam_server_id_header_value": "<%= env('VAULT_ADDR') %>"
               }
         }
