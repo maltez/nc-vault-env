@@ -1,6 +1,8 @@
 # nc-vault-env
 
+[![Build Status](https://travis-ci.org/namecheap/nc-vault-env.svg?branch=master)](https://travis-ci.org/namecheap/nc-vault-env)
 [![npm version](https://badge.fury.io/js/nc-vault-env.svg)](https://www.npmjs.com/package/nc-vault-env)
+[![npm](https://img.shields.io/npm/dm/nc-vault-env)](https://www.npmjs.com/package/nc-vault-env)
 
 This package provides a convenient way to launch a subprocess with environment variables populated from Vault.
 
