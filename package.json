@@ -1,6 +1,6 @@
 {
   "name": "nc-vault-env",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "Read and set environmental variables for processes from Vault",
   "main": "./lib/VaultEnv.js",
   "scripts": {
@@ -21,7 +21,7 @@
     "commander": "^2.10.0",
     "lodash": "^4.17.4",
     "mockery": "^2.1.0",
-    "node-vault-client": "^0.4.0",
+    "node-vault-client": "^0.5.0",
     "winston": "^2.3.1"
   },
   "devDependencies": {
